@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>감자 마켓 - 1:1 감자톡</title>
+  
+  <!-- 웹폰트: Pretendard -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  
+  <!-- Supabase JS Client v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    /* ==========================================================================
+       [디자인 시스템] 감자 마켓 - 따뜻하고 포근한 1:1 감자톡 테마
+       ========================================================================== */
+    :root {
+      --potato-primary: #8c5828;      /* 따뜻한 구운 감자 브라운 */
+      --potato-primary-light: #b07d4b;/* 골든 감자 브라운 */
+      --potato-primary-dark: #6d421b; /* 딥 브라운 */
+      --potato-soft: #f4ede4;         /* 감자 속살 베이지 */
+      --potato-bg: #fdfaf6;           /* 밝고 부드러운 크림 아이보리 배경 */
+      --potato-chat-bg: #f9f5f0;      /* 채팅 대화방 편안한 배경 */
+      --potato-card-bg: #ffffff;      /* 카드/모달 화이트 */
+      --potato-border: #ede1d3;       /* 감자 테두리 */
+      --potato-border-light: #f3eae0;
+
+      /* 노란색/골드 포인트 컬러 */
+      --potato-yellow-main: #ffc82c;
+      --potato-yellow-light: #ffe57f;
+      --potato-yellow-soft: #fff9e6;
+      --text-on-yellow: #3c2008;
+
+      /* 내 말풍선 컬러 */
+      --bubble-mine-bg: #8c5828;
+      --bubble-mine-text: #ffffff;
+      --bubble-mine-time: rgba(255, 255, 255, 0.75);
+
+      /* 상대방 말풍선 컬러 */
+      --bubble-other-bg: #ffffff;
+      --bubble-other-text: #2b2520;
+      --bubble-other-border: #ebdcd0;
+
+      /* 텍스트 컬러 */
+      --text-main: #2b2520;
+      --text-sub: #6e6459;
+      --text-muted: #9c9186;
+      --text-light: #c2b8ae;
+
+      /* 상태 색상 */
+      --status-selling: #2e7d32;
+      --status-selling-bg: #eaf6ea;
+      --status-reserved: #d97706;
+      --status-reserved-bg: #fff4e5;
+      --status-completed: #757575;
+      --status-completed-bg: #eeeeee;
+
+      --manner-gold: #f59e0b;
+      --manner-gold-bg: #fef3c7;
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+
+      --shadow-sm: 0 2px 8px rgba(90, 60, 30, 0.05);
+      --shadow-md: 0 6px 18px rgba(90, 60, 30, 0.08);
+      --shadow-top: 0 -4px 16px rgba(90, 60, 30, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #efe8df;
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* 채팅 전용 화면 래퍼 (모바일 기기 프레임 / 단독 앱 규격) */
+    .chat-app-wrapper {
+      width: 100%;
+      max-width: 520px;
+      height: 100vh;
+      max-height: 100vh;
+      background-color: var(--potato-chat-bg);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 0 40px rgba(70, 45, 20, 0.15);
+      overflow: hidden;
+    }
+
+    @media (min-width: 521px) {
+      body {
+        padding: 20px 0;
+      }
+      .chat-app-wrapper {
+        height: 94vh;
+        max-height: 880px;
+        border-radius: 28px;
+        border: 1px solid var(--potato-border);
+      }
+    }
+
+    /* ----------------------------------------------------
+       1. 최상단 네비게이션 헤더
+       ---------------------------------------------------- */
+    .chat-header {
+      background-color: #ffffff;
+      height: 64px;
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--potato-border-light);
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .btn-header-back {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      border: none;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-main);
+      transition: background 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .btn-header-back:hover {
+      background-color: var(--potato-soft);
+    }
+
+    .partner-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      cursor: pointer;
+    }
+
+    .partner-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      object-fit: cover;
+      border: 1.5px solid var(--potato-border);
+      background-color: var(--potato-soft);
+      flex-shrink: 0;
+    }
+
+    .partner-meta {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .partner-name-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .partner-name {
+      font-size: 1.02rem;
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .partner-verified-badge {
+      font-size: 0.72rem;
+      background: var(--potato-yellow-soft);
+      color: #92400e;
+      border: 1px solid var(--potato-yellow-light);
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .partner-sub-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .manner-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-weight: 700;
+      color: #c25e00;
+      background: #fff6eb;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-header-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-full);
+      border: none;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-sub);
+      transition: background 0.15s ease;
+    }
+
+    .btn-header-icon:hover {
+      background-color: var(--potato-soft);
+      color: var(--potato-primary);
+    }
+
+    /* ----------------------------------------------------
+       2. 상단 고정 상품 정보 요약 배너
+       ---------------------------------------------------- */
+    .product-summary-bar {
+      background-color: #ffffff;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--potato-border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      top: 64px;
+      z-index: 20;
+      box-shadow: 0 4px 12px rgba(90, 60, 30, 0.03);
+    }
+
+    .product-summary-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex: 1;
+      cursor: pointer;
+    }
+
+    .product-thumb {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      background-color: var(--potato-soft);
+      border: 1px solid var(--potato-border-light);
+      flex-shrink: 0;
+    }
+
+    .product-info-text {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .product-status-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .product-status-tag {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .product-status-tag.selling {
+      background-color: var(--status-selling-bg);
+      color: var(--status-selling);
+    }
+
+    .product-status-tag.reserved {
+      background-color: var(--status-reserved-bg);
+      color: var(--status-reserved);
+    }
+
+    .product-status-tag.completed {
+      background-color: var(--status-completed-bg);
+      color: var(--status-completed);
+    }
+
+    .product-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .product-price {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--potato-primary-dark);
+    }
+
+    .product-quick-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .btn-quick-promise {
+      background-color: var(--potato-yellow-main);
+      color: var(--text-on-yellow);
+      border: none;
+      padding: 7px 12px;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 2px 6px rgba(255, 200, 44, 0.3);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .btn-quick-promise:hover {
+      background-color: var(--potato-yellow-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-quick-pay {
+      background-color: var(--potato-soft);
+      color: var(--potato-primary-dark);
+      border: 1px solid var(--potato-border);
+      padding: 7px 12px;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.15s ease;
+    }
+
+    .btn-quick-pay:hover {
+      background-color: #ede2d3;
+    }
+
+    /* ----------------------------------------------------
+       3. 채팅 메시지 스크롤 본문
+       ---------------------------------------------------- */
+    .chat-messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 16px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scroll-behavior: smooth;
+    }
+
+    .chat-messages-container::-webkit-scrollbar {
+      width: 5px;
+    }
+    .chat-messages-container::-webkit-scrollbar-thumb {
+      background: #dfd4c7;
+      border-radius: 4px;
+    }
+
+    /* 날짜 구분선 */
+    .chat-date-divider {
+      text-align: center;
+      margin: 8px 0;
+      position: relative;
+    }
+
+    .chat-date-chip {
+      background-color: rgba(220, 207, 194, 0.6);
+      color: var(--text-sub);
+      font-size: 0.74rem;
+      font-weight: 600;
+      padding: 4px 14px;
+      border-radius: var(--radius-full);
+      display: inline-block;
+    }
+
+    /* 감자 안심 수칙 안내 카드 */
+    .safety-notice-card {
+      background: #ffffff;
+      border: 1px solid #ebd9c8;
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.78rem;
+      color: var(--text-sub);
+      line-height: 1.45;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .safety-notice-card strong {
+      color: var(--potato-primary-dark);
+    }
+
+    .safety-icon {
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+
+    /* 시스템 메시지 */
+    .system-message-row {
+      display: flex;
+      justify-content: center;
+      margin: 6px 0;
+    }
+
+    .system-bubble {
+      background-color: #f1e9df;
+      color: var(--text-sub);
+      font-size: 0.76rem;
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      text-align: center;
+      max-width: 85%;
+      border: 1px solid var(--potato-border-light);
+    }
+
+    /* 메시지 행 공통 */
+    .message-row {
+      display: flex;
+      gap: 8px;
+      max-width: 82%;
+    }
+
+    /* 상대방 메시지 */
+    .message-row.other {
+      align-self: flex-start;
+    }
+
+    .message-other-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-full);
+      object-fit: cover;
+      background-color: var(--potato-soft);
+      border: 1px solid var(--potato-border-light);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .message-content-col {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .message-sender-name {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-sub);
+      margin-left: 2px;
+    }
+
+    .bubble-and-time {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+    }
+
+    .bubble-other {
+      background-color: var(--bubble-other-bg);
+      color: var(--bubble-other-text);
+      padding: 10px 14px;
+      border-radius: 4px 18px 18px 18px;
+      font-size: 0.92rem;
+      line-height: 1.45;
+      word-break: break-word;
+      border: 1px solid var(--bubble-other-border);
+      box-shadow: 0 1px 4px rgba(90, 60, 30, 0.04);
+    }
+
+    /* 내 메시지 */
+    .message-row.mine {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .message-row.mine .bubble-and-time {
+      flex-direction: row-reverse;
+    }
+
+    .bubble-mine {
+      background: linear-gradient(135deg, #8c5828 0%, #76441b 100%);
+      color: var(--bubble-mine-text);
+      padding: 10px 14px;
+      border-radius: 18px 4px 18px 18px;
+      font-size: 0.92rem;
+      line-height: 1.45;
+      word-break: break-word;
+      box-shadow: 0 2px 8px rgba(118, 68, 27, 0.2);
+    }
+
+    /* 시간 및 읽음 표시 */
+    .message-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .message-row.other .message-meta {
+      align-items: flex-start;
+    }
+
+    .unread-badge {
+      font-size: 0.66rem;
+      font-weight: 700;
+      color: var(--potato-primary-light);
+    }
+
+    /* 거래 약속 카드 말풍선 */
+    .promise-card-bubble {
+      background: #ffffff;
+      border: 2px solid var(--potato-yellow-main);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 250px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .promise-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--potato-yellow-soft);
+      color: #92400e;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      align-self: flex-start;
+    }
+
+    .promise-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .promise-item-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: var(--text-sub);
+    }
+
+    .btn-promise-accept {
+      background-color: var(--potato-yellow-main);
+      color: var(--text-on-yellow);
+      border: none;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    /* 이미지 메시지 */
+    .bubble-image {
+      max-width: 210px;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      cursor: pointer;
+      border: 1px solid var(--potato-border);
+    }
+
+    .bubble-image img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* ----------------------------------------------------
+       4. 추천 빠른 답변 칩 (Quick Replies)
+       ---------------------------------------------------- */
+    .quick-replies-wrap {
+      padding: 6px 14px;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      white-space: nowrap;
+      background-color: var(--potato-chat-bg);
+      border-top: 1px solid var(--potato-border-light);
+    }
+
+    .quick-replies-wrap::-webkit-scrollbar {
+      display: none;
+    }
+
+    .quick-chip {
+      background-color: #ffffff;
+      border: 1px solid var(--potato-border);
+      color: var(--text-sub);
+      font-size: 0.78rem;
+      padding: 6px 12px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+      font-weight: 500;
+    }
+
+    .quick-chip:hover {
+      background-color: var(--potato-yellow-soft);
+      border-color: var(--potato-yellow-main);
+      color: var(--text-on-yellow);
+      transform: translateY(-1px);
+    }
+
+    /* ----------------------------------------------------
+       5. 하단 메시지 입력 바 (Input Dock)
+       ---------------------------------------------------- */
+    .chat-input-bar {
+      background-color: #ffffff;
+      border-top: 1px solid var(--potato-border);
+      padding: 10px 14px;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      position: relative;
+      z-index: 25;
+    }
+
+    .btn-attach-plus {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--potato-border);
+      background-color: var(--potato-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--potato-primary-dark);
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+
+    .btn-attach-plus:hover {
+      background-color: #ede0d0;
+      transform: rotate(90deg);
+    }
+
+    .chat-textarea-wrap {
+      flex: 1;
+      background-color: var(--potato-bg);
+      border: 1.5px solid var(--potato-border);
+      border-radius: 20px;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .chat-textarea-wrap:focus-within {
+      border-color: var(--potato-primary);
+      background-color: #ffffff;
+      box-shadow: 0 0 0 3px rgba(140, 88, 40, 0.12);
+    }
+
+    .chat-textarea {
+      width: 100%;
+      border: none;
+      outline: none;
+      background: transparent;
+      resize: none;
+      font-size: 0.92rem;
+      line-height: 1.4;
+      max-height: 100px;
+      min-height: 22px;
+      color: var(--text-main);
+    }
+
+    .chat-textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    .btn-chat-send {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      border: none;
+      background-color: var(--potato-yellow-main);
+      color: var(--text-on-yellow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(255, 200, 44, 0.35);
+      transition: all 0.15s ease;
+    }
+
+    .btn-chat-send:disabled {
+      background-color: #e5ded5;
+      color: #9c9288;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .btn-chat-send:not(:disabled):hover {
+      background-color: var(--potato-yellow-hover);
+      transform: scale(1.05);
+    }
+
+    /* 첨부 옵션 모달/팝오버 */
+    .attach-menu-popover {
+      position: absolute;
+      bottom: 72px;
+      left: 14px;
+      background: #ffffff;
+      border: 1px solid var(--potato-border);
+      border-radius: var(--radius-lg);
+      padding: 12px;
+      display: none;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      box-shadow: 0 8px 24px rgba(90, 60, 30, 0.12);
+      z-index: 40;
+      width: 290px;
+    }
+
+    .attach-menu-popover.active {
+      display: grid;
+      animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .attach-menu-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: var(--radius-sm);
+      transition: background 0.15s ease;
+    }
+
+    .attach-menu-item:hover {
+      background: var(--potato-soft);
+    }
+
+    .attach-icon-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      background: var(--potato-yellow-soft);
+      border: 1px solid var(--potato-yellow-light);
+    }
+
+    .attach-menu-label {
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: var(--text-sub);
+    }
+
+    /* 토스트 메시지 */
+    .chat-toast {
+      position: absolute;
+      top: 130px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background-color: rgba(43, 37, 32, 0.92);
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: var(--radius-full);
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s ease;
+      z-index: 60;
+    }
+
+    .chat-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* 타이핑 인디케이터 */
+    .typing-indicator {
+      display: none;
+      align-self: flex-start;
+      margin-left: 42px;
+      background: #ffffff;
+      border: 1px solid var(--bubble-other-border);
+      padding: 8px 12px;
+      border-radius: 14px;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .typing-indicator.active {
+      display: inline-flex;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--potato-primary-light);
+      border-radius: 50%;
+      animation: bounce 1.2s infinite ease-in-out;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-5px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 전체 채팅 앱 컨테이너 -->
+  <main class="chat-app-wrapper" role="region" aria-label="감자 마켓 1:1 감자톡">
+    
+    <!-- 1. 최상단 네비게이션 헤더 -->
+    <header class="chat-header">
+      <div class="header-left">
+        <button type="button" class="btn-header-back" id="btnChatBack" title="뒤로가기" aria-label="이전 화면으로 이동">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+
+        <div class="partner-profile" id="partnerProfileHeader" title="판매자 프로필 보기">
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" 
+               alt="상대방 프로필" class="partner-avatar" id="headerPartnerAvatar">
+          <div class="partner-meta">
+            <div class="partner-name-row">
+              <span class="partner-name" id="headerPartnerName">포슬포슬상점</span>
+              <span class="partner-verified-badge">동네인증</span>
+            </div>
+            <div class="partner-sub-info">
+              <span id="headerPartnerLoc">서초2동</span>
+              <span>•</span>
+              <span class="manner-chip" id="headerPartnerManner">
+                <span>🥔</span>
+                <span id="headerMannerTemp">41.2℃</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button type="button" class="btn-header-icon" id="btnChatCall" title="안심 감자통화 (준비중)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+          </svg>
+        </button>
+        <button type="button" class="btn-header-icon" id="btnChatMore" title="더보기 옵션">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="1.5"></circle>
+            <circle cx="12" cy="5" r="1.5"></circle>
+            <circle cx="12" cy="19" r="1.5"></circle>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- 2. 상단 고정 대화 상품 요약 배너 -->
+    <section class="product-summary-bar" aria-label="대화 중인 상품 요약">
+      <div class="product-summary-left" id="productBannerClick" title="상품 상세 팝업 다시보기">
+        <img src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200&auto=format&fit=crop&q=80" 
+             alt="상품 썸네일" class="product-thumb" id="summaryProductImg">
+        <div class="product-info-text">
+          <div class="product-status-row">
+            <span class="product-status-tag selling" id="summaryProductStatus">🟢 판매중</span>
+          </div>
+          <div class="product-title" id="summaryProductTitle">원목 4인용 라운드 식탁 테이블 (의자 2개 포함)</div>
+          <div class="product-price" id="summaryProductPrice">120,000원</div>
+        </div>
+      </div>
+
+      <div class="product-quick-actions">
+        <button type="button" class="btn-quick-promise" id="btnCreatePromise" title="직거래 일시/장소 약속잡기">
+          <span>📅</span>
+          <span>약속잡기</span>
+        </button>
+        <button type="button" class="btn-quick-pay" id="btnPotatoPay" title="감자페이 안전송금">
+          <span>💸</span>
+          <span>송금</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 3. 실시간 채팅 메시지 리스트 스크롤 영역 -->
+    <section class="chat-messages-container" id="chatMessagesArea" aria-live="polite">
+      <!-- 날짜 구분선 -->
+      <div class="chat-date-divider">
+        <span class="chat-date-chip" id="currentDateChip">2026년 10월 20일 화요일</span>
+      </div>
+
+      <!-- 감자 안심 직거래 안내 배너 -->
+      <div class="safety-notice-card">
+        <span class="safety-icon">🥔</span>
+        <div>
+          <strong>감자 안심톡 직거래 가이드</strong><br>
+          개인 연락처나 카카오톡 등 외부 메신저 유도에 응하지 마세요. 계좌 입금 전 상품을 직접 확인하는 직거래를 권장합니다.
+        </div>
+      </div>
+
+      <!-- 시스템 메시지: 방 개설 알림 -->
+      <div class="system-message-row">
+        <div class="system-bubble" id="systemStartMessage">
+          '원목 4인용 라운드 식탁 테이블'에 대한 거래 대화가 시작되었습니다.
+        </div>
+      </div>
+
+      <!-- 상대방(판매자) 메시지 예시 -->
+      <div class="message-row other">
+        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" 
+             alt="상대방 프로필" class="message-other-avatar" id="msgOtherAvatar">
+        <div class="message-content-col">
+          <span class="message-sender-name" id="msgOtherName">포슬포슬상점</span>
+          <div class="bubble-and-time">
+            <div class="bubble-other">
+              안녕하세요! 감자마켓 보고 문의주셔서 감사합니다 🥔<br>상품 깨끗하게 보관 중입니다. 궁금하신 점 있으신가요?
+            </div>
+            <div class="message-meta">
+              <span>오후 8:10</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 동적 메시지 추가 영역 -->
+      <div id="dynamicMessagesSlot"></div>
+
+      <!-- 타이핑 중 인디케이터 (상대방이 입력 중일 때) -->
+      <div class="typing-indicator" id="typingIndicator">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+    </section>
+
+    <!-- 4. 빠른 추천 답변 칩 -->
+    <div class="quick-replies-wrap" id="quickRepliesWrap">
+      <button type="button" class="quick-chip" onclick="handleQuickSend('안녕하세요! 아직 구매 가능한가요? 🥔')">아직 구매 가능한가요? 🥔</button>
+      <button type="button" class="quick-chip" onclick="handleQuickSend('혹시 네고 조금 가능할까요? 😊')">네고 가능한가요? 😊</button>
+      <button type="button" class="quick-chip" onclick="handleQuickSend('어디서 직거래 가능하신가요? 📍')">어디서 직거래 가능해요? 📍</button>
+      <button type="button" class="quick-chip" onclick="handleQuickSend('오늘 저녁에 바로 거래할 수 있어요! ✨')">오늘 바로 거래 가능해요! ✨</button>
+    </div>
+
+    <!-- 5. 하단 첨부 팝오버 메뉴 -->
+    <div class="attach-menu-popover" id="attachMenuPopover">
+      <button type="button" class="attach-menu-item" onclick="triggerFileInput()">
+        <div class="attach-icon-circle">📷</div>
+        <span class="attach-menu-label">사진 첨부</span>
+      </button>
+      <button type="button" class="attach-menu-item" onclick="sendPromiseMessage()">
+        <div class="attach-icon-circle">📅</div>
+        <span class="attach-menu-label">약속 잡기</span>
+      </button>
+      <button type="button" class="attach-menu-item" onclick="sendLocationMessage()">
+        <div class="attach-icon-circle">📍</div>
+        <span class="attach-menu-label">장소 공유</span>
+      </button>
+      <button type="button" class="attach-menu-item" onclick="sendRemitMessage()">
+        <div class="attach-icon-circle">💸</div>
+        <span class="attach-menu-label">안전 송금</span>
+      </button>
+    </div>
+    <input type="file" id="chatFileInput" accept="image/*" style="display: none;" onchange="handleChatFileUpload(this)">
+
+    <!-- 6. 하단 메시지 입력 바 -->
+    <footer class="chat-input-bar">
+      <button type="button" class="btn-attach-plus" id="btnAttachPlus" title="사진, 약속잡기, 송금 등 추가 기능">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+
+      <div class="chat-textarea-wrap">
+        <textarea id="chatInputText" class="chat-textarea" rows="1" placeholder="메시지를 입력하세요... (Enter 전송)" aria-label="메시지 입력"></textarea>
+      </div>
+
+      <button type="button" class="btn-chat-send" id="btnChatSend" title="메시지 전송" aria-label="전송" disabled>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </footer>
+
+    <!-- 플로팅 토스트 -->
+    <div class="chat-toast" id="chatToast">
+      <span>🥔</span>
+      <span id="chatToastText">알림</span>
+    </div>
+
+  </main>
+
+  <!-- ========================================================================
+       스크립트: 채팅 데이터 관리, Supabase 실시간 연동 및 메시지 송수신
+       ======================================================================== -->
+  <script>
+    // Supabase 설정
+    const SUPABASE_URL = "https://shhlmhtswfbrjrfomzbv.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoaGxtaHRzd2ZicmpyZm9temJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0MDUzMTUsImV4cCI6MjEwNzk4MTMxNX0.VqrgbNhbnDBRRvUo2WqDJJk2bbwR9SW5VJz9N9GWvFw";
+    const sbClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+    // 현재 사용자 ID (구매자 기본: 햇감자러버)
+    let currentUserId = localStorage.getItem("gamza_current_user_id") || "11111111-1111-1111-1111-111111111111";
+
+    // URL 파라미터 파싱 (?productId=2 or ?roomId=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    let targetProductId = Number(urlParams.get("productId")) || 2;
+    let targetRoomId = urlParams.get("roomId") || null;
+
+    // 현재 활성화된 채팅방 및 대상 상품 정보
+    let currentRoom = null;
+    let currentProduct = null;
+    let currentSeller = null;
+
+    // DOM 요소
+    const chatMessagesArea = document.getElementById("chatMessagesArea");
+    const dynamicMessagesSlot = document.getElementById("dynamicMessagesSlot");
+    const chatInputText = document.getElementById("chatInputText");
+    const btnChatSend = document.getElementById("btnChatSend");
+    const btnAttachPlus = document.getElementById("btnAttachPlus");
+    const attachMenuPopover = document.getElementById("attachMenuPopover");
+    const typingIndicator = document.getElementById("typingIndicator");
+
+    // 초기화
+    document.addEventListener("DOMContentLoaded", async () => {
+      setupEventListeners();
+      await loadChatContext();
+    });
+
+    function setupEventListeners() {
+      // 뒤로가기
+      document.getElementById("btnChatBack").addEventListener("click", () => {
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.href = "index.html";
+        }
+      });
+
+      // 상품 배너 클릭 시 상세창 이동 (또는 복귀)
+      document.getElementById("productBannerClick").addEventListener("click", () => {
+        if (targetProductId) {
+          window.location.href = `screen2_detail.html?productId=${targetProductId}`;
+        }
+      });
+
+      // 입력창 자동 높이 조절 및 버튼 활성화
+      chatInputText.addEventListener("input", () => {
+        chatInputText.style.height = "auto";
+        chatInputText.style.height = Math.min(chatInputText.scrollHeight, 100) + "px";
+        btnChatSend.disabled = chatInputText.value.trim().length === 0;
+      });
+
+      // Enter키 전송 (Shift+Enter는 줄바꿈)
+      chatInputText.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          if (!btnChatSend.disabled) {
+            handleSendMessage();
+          }
+        }
+      });
+
+      // 전송 버튼 클릭
+      btnChatSend.addEventListener("click", handleSendMessage);
+
+      // (+) 첨부 메뉴 토글
+      btnAttachPlus.addEventListener("click", (e) => {
+        e.stopPropagation();
+        attachMenuPopover.classList.toggle("active");
+      });
+
+      // 외부 클릭 시 첨부 메뉴 닫기
+      document.addEventListener("click", (e) => {
+        if (!attachMenuPopover.contains(e.target) && e.target !== btnAttachPlus) {
+          attachMenuPopover.classList.remove("active");
+        }
+      });
+
+      // 직거래 약속잡기 버튼
+      document.getElementById("btnCreatePromise").addEventListener("click", sendPromiseMessage);
+
+      // 송금 버튼
+      document.getElementById("btnPotatoPay").addEventListener("click", sendRemitMessage);
+
+      // 더보기 버튼
+      document.getElementById("btnChatMore").addEventListener("click", () => {
+        showChatToast("채팅방 설정 및 신고 기능이 지원됩니다.");
+      });
+      document.getElementById("btnChatCall").addEventListener("click", () => {
+        showChatToast("📞 안심 감자통화 기능 준비 중입니다!");
+      });
+    }
+
+    /* ----------------------------------------------------
+       데이터 로드: 상품 정보, 판매자 정보, 방 정보 및 메시지
+       ---------------------------------------------------- */
+    async function loadChatContext() {
+      if (sbClient) {
+        try {
+          // 1. 상품 정보 로드
+          const { data: prodData, error: prodErr } = await sbClient
+            .from("products")
+            .select(`*, seller:profiles!products_seller_id_fkey(*)`)
+            .eq("id", targetProductId)
+            .single();
+
+          if (!prodErr && prodData) {
+            currentProduct = prodData;
+            currentSeller = prodData.seller || {
+              nickname: "포슬포슬상점",
+              manner_temperature: 41.2,
+              primary_location: "서초2동",
+              avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
+            };
+            updateHeaderAndBanner(currentProduct, currentSeller);
+          }
+
+          // 2. 채팅방 조회 또는 생성
+          let roomId = targetRoomId;
+          if (!roomId && currentProduct) {
+            const { data: existingRoom } = await sbClient
+              .from("chat_rooms")
+              .select("*")
+              .eq("product_id", currentProduct.id)
+              .eq("buyer_id", currentUserId)
+              .maybeSingle();
+
+            if (existingRoom) {
+              currentRoom = existingRoom;
+              roomId = existingRoom.id;
+            } else {
+              // 새 방 생성
+              const { data: newRoom } = await sbClient
+                .from("chat_rooms")
+                .insert({
+                  product_id: currentProduct.id,
+                  buyer_id: currentUserId,
+                  seller_id: currentProduct.seller_id,
+                  last_message: "대화가 시작되었습니다.",
+                  status: "ACTIVE"
+                })
+                .select("*")
+                .single();
+
+              if (newRoom) {
+                currentRoom = newRoom;
+                roomId = newRoom.id;
+              }
+            }
+          }
+
+          // 3. 기존 대화 메시지 로드
+          if (roomId) {
+            targetRoomId = roomId;
+            const { data: messages, error: msgErr } = await sbClient
+              .from("chat_messages")
+              .select("*")
+              .eq("room_id", roomId)
+              .order("created_at", { ascending: true });
+
+            if (!msgErr && messages && messages.length > 0) {
+              renderInitialMessages(messages);
+            }
+
+            // 실시간 메시지 구독 (Realtime)
+            subscribeToChatRoom(roomId);
+          }
+
+        } catch (err) {
+          console.warn("Supabase 데이터 연동 오류, 샘플 모드로 전환:", err);
+          setupFallbackData();
+        }
+      } else {
+        setupFallbackData();
+      }
+    }
+
+    function setupFallbackData() {
+      // 오프라인 / 데모 기본값
+      currentProduct = {
+        id: 2,
+        title: "원목 4인용 라운드 식탁 테이블 (의자 2개 포함)",
+        price: 120000,
+        status: "판매중",
+        image_url: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=300&auto=format&fit=crop&q=80"
+      };
+      currentSeller = {
+        nickname: "포슬포슬상점",
+        manner_temperature: 41.2,
+        primary_location: "서초2동",
+        avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
+      };
+      updateHeaderAndBanner(currentProduct, currentSeller);
+    }
+
+    function updateHeaderAndBanner(prod, seller) {
+      if (seller) {
+        document.getElementById("headerPartnerName").textContent = seller.nickname || "판매자";
+        document.getElementById("msgOtherName").textContent = seller.nickname || "판매자";
+        document.getElementById("headerPartnerLoc").textContent = seller.primary_location || "서초동";
+        document.getElementById("headerMannerTemp").textContent = (seller.manner_temperature || "38.5") + "℃";
+        if (seller.avatar_url) {
+          document.getElementById("headerPartnerAvatar").src = seller.avatar_url;
+          document.getElementById("msgOtherAvatar").src = seller.avatar_url;
+        }
+      }
+
+      if (prod) {
+        document.getElementById("summaryProductTitle").textContent = prod.title;
+        document.getElementById("summaryProductPrice").textContent = Number(prod.price || 0).toLocaleString('ko-KR') + "원";
+        if (prod.image_url) {
+          document.getElementById("summaryProductImg").src = prod.image_url;
+        }
+        
+        const statusEl = document.getElementById("summaryProductStatus");
+        if (prod.status === "예약중") {
+          statusEl.textContent = "🟠 예약중";
+          statusEl.className = "product-status-tag reserved";
+        } else if (prod.status === "거래 완료" || prod.status === "completed") {
+          statusEl.textContent = "⚪ 거래 완료";
+          statusEl.className = "product-status-tag completed";
+        } else {
+          statusEl.textContent = "🟢 판매중";
+          statusEl.className = "product-status-tag selling";
+        }
+
+        document.getElementById("systemStartMessage").textContent = 
+          `'${prod.title}'에 대한 거래 대화가 시작되었습니다.`;
+      }
+    }
+
+    function renderInitialMessages(messages) {
+      dynamicMessagesSlot.innerHTML = "";
+      messages.forEach(msg => {
+        if (msg.message_type === "SYSTEM") return; // 상단 배너로 대체
+        appendMessageUI({
+          type: msg.sender_id === currentUserId ? "mine" : "other",
+          text: msg.content,
+          imageUrl: msg.image_url,
+          time: formatTime(msg.created_at),
+          isPromise: msg.message_type === "PROMISE"
+        }, false);
+      });
+      scrollToBottom();
+    }
+
+    // Supabase 실시간 수신 구독
+    function subscribeToChatRoom(roomId) {
+      if (!sbClient) return;
+      sbClient
+        .channel(`room:${roomId}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `room_id=eq.${roomId}`
+        }, payload => {
+          const newMsg = payload.new;
+          if (newMsg.sender_id !== currentUserId) {
+            typingIndicator.classList.remove("active");
+            appendMessageUI({
+              type: "other",
+              text: newMsg.content,
+              imageUrl: newMsg.image_url,
+              time: formatTime(newMsg.created_at)
+            });
+          }
+        })
+        .subscribe();
+    }
+
+    /* ----------------------------------------------------
+       메시지 전송 로직
+       ---------------------------------------------------- */
+    async function handleSendMessage() {
+      const text = chatInputText.value.trim();
+      if (!text) return;
+
+      chatInputText.value = "";
+      chatInputText.style.height = "auto";
+      btnChatSend.disabled = true;
+
+      // 1. 내 화면에 메시지 즉시 렌더링
+      const nowTimeStr = formatTime(new Date());
+      appendMessageUI({
+        type: "mine",
+        text: text,
+        time: nowTimeStr
+      });
+
+      // 2. Supabase DB에 저장
+      if (sbClient && targetRoomId) {
+        try {
+          await sbClient.from("chat_messages").insert({
+            room_id: targetRoomId,
+            sender_id: currentUserId,
+            message_type: "TALK",
+            content: text,
+            is_read: false
+          });
+
+          await sbClient.from("chat_rooms").update({
+            last_message: text,
+            last_message_at: new Date().toISOString()
+          }).eq("id", targetRoomId);
+        } catch (err) {
+          console.error("메시지 저장 오류:", err);
+        }
+      }
+
+      // 3. 상대방(판매자) 자동 응답 시뮬레이션
+      simulateSellerReply(text);
+    }
+
+    function handleQuickSend(text) {
+      chatInputText.value = text;
+      handleSendMessage();
+    }
+
+    // 상대방 판매자의 실감나는 자동 응답 시뮬레이션
+    function simulateSellerReply(incomingText) {
+      typingIndicator.classList.add("active");
+      scrollToBottom();
+
+      setTimeout(() => {
+        typingIndicator.classList.remove("active");
+
+        let replyText = "네, 말씀하신 내용 확인했습니다! 거래 가능해요 🥔";
+        if (incomingText.includes("구매 가능한가요")) {
+          replyText = "네! 아직 구매 가능하십니다. 상태 정말 좋습니다 :)";
+        } else if (incomingText.includes("네고")) {
+          replyText = "음, 이미 많이 낮춘 금액이라 5,000원 정도는 기분 좋게 깎아드릴 수 있어요! 🥔";
+        } else if (incomingText.includes("어디서") || incomingText.includes("직거래")) {
+          replyText = "서초역 3번 출구나 인근 아파트 정문 앞에서 뵐 수 있습니다. 시간 편하신 때 말씀해주세요!";
+        } else if (incomingText.includes("오늘")) {
+          replyText = "좋습니다! 오늘 오후 7시 30분 이후에 가능해요. 그때 괜찮으실까요?";
+        }
+
+        appendMessageUI({
+          type: "other",
+          text: replyText,
+          time: formatTime(new Date())
+        });
+
+        // Supabase DB에도 판매자 응답 저장 (연결 시)
+        if (sbClient && targetRoomId && currentSeller) {
+          const sellerId = currentProduct?.seller_id || "22222222-2222-2222-2222-222222222222";
+          sbClient.from("chat_messages").insert({
+            room_id: targetRoomId,
+            sender_id: sellerId,
+            message_type: "TALK",
+            content: replyText,
+            is_read: true
+          }).then(() => {});
+        }
+      }, 1200);
+    }
+
+    // 직거래 약속잡기 메시지 전송
+    function sendPromiseMessage() {
+      attachMenuPopover.classList.remove("active");
+      const promiseHtml = `
+        <div class="promise-card-bubble">
+          <div class="promise-badge">📅 직거래 약속 제안</div>
+          <div class="promise-title">강남역 4번 출구 앞</div>
+          <div class="promise-item-row">
+            <span>⏰</span>
+            <span>내일(수) 오후 7:00</span>
+          </div>
+          <div class="promise-item-row">
+            <span>🥔</span>
+            <span>'${currentProduct?.title || "식탁 테이블"}' 직거래</span>
+          </div>
+          <button type="button" class="btn-promise-accept" onclick="showChatToast('거래 약속이 확정되었습니다! 캘린더에 등록 완료 🥔')">약속 수락하기</button>
+        </div>
+      `;
+      appendCustomMessageUI("mine", promiseHtml);
+      showChatToast("직거래 약속 카드를 보냈습니다.");
+    }
+
+    // 장소 공유 메시지 전송
+    function sendLocationMessage() {
+      attachMenuPopover.classList.remove("active");
+      const locText = `📍 [직거래 추천 장소] 서초역 3번 출구 스타벅스 앞\n안전하고 밝은 공공장소에서 만나요!`;
+      chatInputText.value = locText;
+      handleSendMessage();
+    }
+
+    // 안전 송금 메시지 전송
+    function sendRemitMessage() {
+      attachMenuPopover.classList.remove("active");
+      const remitHtml = `
+        <div class="promise-card-bubble" style="border-color: #10b981;">
+          <div class="promise-badge" style="background: #ecfdf5; color: #065f46;">💸 감자페이 안전결제</div>
+          <div class="promise-title">${Number(currentProduct?.price || 120000).toLocaleString()}원 결제 요청</div>
+          <div class="promise-item-row">
+            <span>🛡️</span>
+            <span>물건 수령 확인 시 판매자에게 정산됩니다.</span>
+          </div>
+          <button type="button" class="btn-promise-accept" style="background: #10b981; color: white;" onclick="showChatToast('안전결제 송금 창으로 이동합니다.')">감자페이 송금하기</button>
+        </div>
+      `;
+      appendCustomMessageUI("mine", remitHtml);
+    }
+
+    // 사진 파일 업로드 처리
+    function triggerFileInput() {
+      attachMenuPopover.classList.remove("active");
+      document.getElementById("chatFileInput").click();
+    }
+
+    function handleChatFileUpload(input) {
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const imgUrl = e.target.result;
+          appendMessageUI({
+            type: "mine",
+            imageUrl: imgUrl,
+            time: formatTime(new Date())
+          });
+          showChatToast("사진을 전송했습니다.");
+          
+          setTimeout(() => {
+            appendMessageUI({
+              type: "other",
+              text: "사진 잘 보입니다! 상태 확인했어요 :)",
+              time: formatTime(new Date())
+            });
+          }, 1400);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    /* ----------------------------------------------------
+       UI 렌더링 헬퍼 함수
+       ---------------------------------------------------- */
+    function appendMessageUI({ type, text, imageUrl, time }, shouldScroll = true) {
+      const isMine = type === "mine";
+      const row = document.createElement("div");
+      row.className = `message-row ${isMine ? "mine" : "other"}`;
+
+      let contentHtml = "";
+
+      if (isMine) {
+        contentHtml = `
+          <div class="bubble-and-time">
+            ${imageUrl ? `<div class="bubble-image"><img src="${imageUrl}" alt="첨부 이미지"></div>` : `<div class="bubble-mine">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`}
+            <div class="message-meta">
+              <span class="unread-badge">1</span>
+              <span>${time}</span>
+            </div>
+          </div>
+        `;
+      } else {
+        const avatarSrc = currentSeller?.avatar_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80";
+        contentHtml = `
+          <img src="${avatarSrc}" alt="판매자" class="message-other-avatar">
+          <div class="message-content-col">
+            <span class="message-sender-name">${currentSeller?.nickname || "판매자"}</span>
+            <div class="bubble-and-time">
+              ${imageUrl ? `<div class="bubble-image"><img src="${imageUrl}" alt="첨부 이미지"></div>` : `<div class="bubble-other">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`}
+              <div class="message-meta">
+                <span>${time}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      row.innerHTML = contentHtml;
+      dynamicMessagesSlot.appendChild(row);
+
+      if (shouldScroll) {
+        scrollToBottom();
+      }
+    }
+
+    function appendCustomMessageUI(type, customHtml) {
+      const isMine = type === "mine";
+      const row = document.createElement("div");
+      row.className = `message-row ${isMine ? "mine" : "other"}`;
+      const time = formatTime(new Date());
+
+      row.innerHTML = `
+        <div class="bubble-and-time">
+          ${customHtml}
+          <div class="message-meta">
+            <span class="unread-badge">1</span>
+            <span>${time}</span>
+          </div>
+        </div>
+      `;
+      dynamicMessagesSlot.appendChild(row);
+      scrollToBottom();
+    }
+
+    function scrollToBottom() {
+      requestAnimationFrame(() => {
+        chatMessagesArea.scrollTop = chatMessagesArea.scrollHeight;
+      });
+    }
+
+    function formatTime(dateStr) {
+      const d = dateStr ? new Date(dateStr) : new Date();
+      let hours = d.getHours();
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const ampm = hours >= 12 ? '오후' : '오전';
+      hours = hours % 12;
+      hours = hours ? hours : 12; // 0시는 12시로 표시
+      return `${ampm} ${hours}:${minutes}`;
+    }
+
+    function escapeHtml(string) {
+      if (!string) return '';
+      return String(string)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function showChatToast(msg) {
+      const toast = document.getElementById("chatToast");
+      const text = document.getElementById("chatToastText");
+      text.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2500);
+    }
+  </script>
+</body>
+</html>

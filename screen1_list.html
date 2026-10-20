@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>감자 마켓 - 따뜻한 이웃 간 중고거래</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #8c5828;
+      --primary-light: #b07d4b;
+      --primary-hover: #72441c;
+      --primary-soft: #f4ede4;
+      --bg-warm: #fdfaf6;
+      --card-bg: #ffffff;
+      --text-main: #2b2520;
+      --text-sub: #786f66;
+      --text-muted: #a3988e;
+      --border-color: #ede5dc;
+      --border-light: #f3ece4;
+      --shadow-sm: 0 2px 8px rgba(140, 88, 40, 0.06);
+      --shadow-md: 0 6px 18px rgba(140, 88, 40, 0.1);
+      --shadow-lg: 0 12px 28px rgba(140, 88, 40, 0.15);
+
+      /* 상태 색상 */
+      --status-available-bg: #eaf6ec;
+      --status-available-text: #237804;
+      --status-reserved-bg: #fff7e6;
+      --status-reserved-text: #d46b08;
+      --status-completed-bg: #f0f0f0;
+      --status-completed-text: #666666;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-warm);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 상단 네비게이션 헤더 */
+    .header-wrapper {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(253, 250, 246, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .header-container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    /* 로고 */
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--primary);
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.2s ease;
+      white-space: nowrap;
+    }
+    .brand-logo:hover {
+      transform: scale(1.02);
+    }
+    .logo-icon {
+      font-size: 1.6rem;
+      filter: drop-shadow(0 2px 4px rgba(140, 88, 40, 0.2));
+    }
+
+    /* 검색창 */
+    .search-bar-wrap {
+      flex: 1;
+      max-width: 480px;
+      position: relative;
+    }
+    .search-input {
+      width: 100%;
+      padding: 0.65rem 1rem 0.65rem 2.6rem;
+      border: 1.5px solid var(--border-color);
+      border-radius: 999px;
+      background-color: #fff;
+      font-size: 0.95rem;
+      color: var(--text-main);
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .search-input:focus {
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(176, 125, 75, 0.18);
+    }
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+    }
+
+    /* 헤더 액션 버튼 */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.58rem 1.15rem;
+      font-size: 0.92rem;
+      font-weight: 600;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #ffe066 0%, #ffc107 100%);
+      color: #3c2008;
+      font-weight: 800;
+      border: 1px solid rgba(255, 179, 0, 0.4);
+      box-shadow: 0 4px 14px rgba(255, 193, 7, 0.45);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #ffd54f 0%, #ffb300 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(255, 193, 7, 0.55);
+    }
+    .btn-outline {
+      background-color: transparent;
+      color: var(--primary);
+      border: 1.5px solid var(--border-color);
+    }
+    .btn-outline:hover {
+      background-color: var(--primary-soft);
+      border-color: var(--primary-light);
+    }
+
+    /* 메인 콘텐츠 컨테이너 */
+    .main-container {
+      max-width: 1140px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 3.5rem;
+      flex: 1;
+    }
+
+    /* 서브 배너 / 인사말 */
+    .hero-banner {
+      background: linear-gradient(135deg, #f8efe6 0%, #fae6d3 100%);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.25rem 1.6rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-sm);
+    }
+    .hero-text h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.25rem;
+    }
+    .hero-text p {
+      font-size: 0.9rem;
+      color: var(--text-sub);
+    }
+    .hero-badge {
+      background-color: #fff;
+      color: var(--primary);
+      padding: 0.35rem 0.85rem;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      border: 1px solid var(--border-color);
+      display: none;
+    }
+    @media (min-width: 640px) {
+      .hero-badge {
+        display: inline-block;
+      }
+    }
+
+    /* 필터 & 컨트롤 영역 */
+    .controls-section {
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* 카테고리 칩 스크롤 */
+    .category-scroll-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE/Edge */
+    }
+    .category-scroll-container::-webkit-scrollbar {
+      display: none; /* Chrome/Safari */
+    }
+
+    .category-chip {
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      color: var(--text-sub);
+      padding: 0.45rem 1rem;
+      border-radius: 999px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .category-chip:hover {
+      border-color: var(--primary-light);
+      color: var(--primary);
+      background-color: var(--primary-soft);
+    }
+    .category-chip.active {
+      background: linear-gradient(135deg, #ffe066 0%, #ffc107 100%);
+      color: #3c2008;
+      border-color: #ffb300;
+      font-weight: 800;
+      box-shadow: 0 3px 10px rgba(255, 193, 7, 0.35);
+    }
+
+    /* 서브 바: 검색 결과 건수 & 거래가능 토글 */
+    .filter-sub-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      padding: 0.5rem 0.25rem 0;
+      border-bottom: 1px solid var(--border-light);
+      padding-bottom: 0.75rem;
+    }
+    .result-count {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .result-count span {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    /* 거래 가능만 보기 토글 스위치 */
+    .toggle-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-label {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-sub);
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #dfd7ce;
+      transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    input:checked + .slider {
+      background-color: var(--primary-light);
+    }
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* 상품 카드 그리드 */
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+      margin-top: 1rem;
+    }
+    @media (min-width: 768px) {
+      .product-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+      }
+    }
+    @media (min-width: 1024px) {
+      .product-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+      }
+    }
+
+    /* 카드 스타일 */
+    .product-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+    }
+    .product-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary-light);
+    }
+
+    /* 썸네일 이미지 영역 */
+    .card-thumb-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 85%; /* 1:0.85 비율 */
+      background-color: #f2ebe4;
+      overflow: hidden;
+    }
+    .card-thumb {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+    .product-card:hover .card-thumb {
+      transform: scale(1.04);
+    }
+
+    /* 거래 완료 상태 이미지 딤 */
+    .product-card.completed .card-thumb {
+      filter: grayscale(40%) contrast(90%);
+    }
+
+    /* 상태 뱃지 (이미지 위 오버레이) */
+    .badge-status {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 0.28rem 0.65rem;
+      border-radius: 6px;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.12);
+      z-index: 2;
+    }
+    .badge-available {
+      background-color: rgba(35, 120, 4, 0.9);
+      color: #ffffff;
+    }
+    .badge-reserved {
+      background-color: rgba(217, 119, 6, 0.92);
+      color: #ffffff;
+    }
+    .badge-completed {
+      background-color: rgba(100, 100, 100, 0.88);
+      color: #ffffff;
+    }
+
+    /* 찜 하트 버튼 */
+    .like-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(4px);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #8c7f76;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+      z-index: 3;
+    }
+    .like-btn:hover {
+      background: #ffffff;
+      color: #e63946;
+      transform: scale(1.1);
+    }
+    .like-btn.liked {
+      color: #e63946;
+    }
+
+    /* 카드 본문 정보 */
+    .card-body {
+      padding: 1rem 1.05rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      justify-content: space-between;
+      gap: 0.4rem;
+    }
+    .card-title {
+      font-size: 0.98rem;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.38;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-height: 2.7em;
+    }
+    .card-meta {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 0.15rem;
+    }
+    .card-meta-dot {
+      display: inline-block;
+      width: 2.5px;
+      height: 2.5px;
+      background: var(--text-muted);
+      border-radius: 50%;
+    }
+    .card-footer {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px dashed var(--border-light);
+    }
+    .card-price {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+    .card-sub-info {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    /* 빈 검색결과 상태 (Empty State) */
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 4.5rem 1rem;
+      background-color: #fff;
+      border-radius: 16px;
+      border: 1px dashed var(--border-color);
+      display: none;
+    }
+    .empty-icon {
+      font-size: 3.5rem;
+      margin-bottom: 0.75rem;
+      animation: float 2.5s infinite ease-in-out;
+    }
+    .empty-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.35rem;
+    }
+    .empty-desc {
+      font-size: 0.9rem;
+      color: var(--text-sub);
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    /* 토스트 알림 (단독 실행 시 피드백 제공) */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      pointer-events: none;
+    }
+    .toast-msg {
+      background: rgba(43, 37, 32, 0.92);
+      color: #fff;
+      padding: 0.75rem 1.4rem;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      opacity: 0;
+      transform: translateY(15px);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .toast-msg.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* 반응형 세부 조정 */
+    @media (max-width: 640px) {
+      .header-container {
+        padding: 0.75rem 0.9rem;
+        gap: 0.5rem;
+      }
+      .brand-logo {
+        font-size: 1.15rem;
+      }
+      .logo-icon {
+        font-size: 1.35rem;
+      }
+      .header-actions .btn {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.82rem;
+      }
+      .login-btn {
+        display: none; /* 모바일에서 글쓰기 버튼 집중 */
+      }
+      .main-container {
+        padding: 1rem 0.85rem 3rem;
+      }
+      .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+      }
+      .card-body {
+        padding: 0.75rem 0.8rem;
+      }
+      .card-title {
+        font-size: 0.88rem;
+      }
+      .card-price {
+        font-size: 1.02rem;
+      }
+      .hero-banner {
+        padding: 1rem;
+      }
+      .hero-text h1 {
+        font-size: 1.1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 상단 네비게이션 헤더 -->
+  <header class="header-wrapper">
+    <div class="header-container">
+      <!-- 감자 로고 -->
+      <a href="#" class="brand-logo" id="brandLogo" title="감자 마켓 홈으로">
+        <span class="logo-icon">🥔</span>
+        <span>감자 마켓</span>
+      </a>
+
+      <!-- 검색창 -->
+      <div class="search-bar-wrap">
+        <span class="search-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </span>
+        <input type="text" id="searchInput" class="search-input" placeholder="동네 이름이나 물품명을 검색해보세요" autocomplete="off">
+      </div>
+
+      <!-- 상단 우측 액션 버튼 -->
+      <div class="header-actions">
+        <button type="button" class="btn btn-primary" id="btnWrite">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>글쓰기</span>
+        </button>
+        <button type="button" class="btn btn-outline login-btn" id="btnLogin">
+          <span>로그인</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 메인 레이아웃 -->
+  <main class="main-container">
+
+    <!-- 배너 -->
+    <section class="hero-banner">
+      <div class="hero-text">
+        <h1>포근하고 따뜻한 이웃 간 중고거래 🥔</h1>
+        <p>우리 동네 믿을 수 있는 알감자 같은 이웃들과 함께해요!</p>
+      </div>
+      <div class="hero-badge">강남구 역삼1동 📍</div>
+    </section>
+
+    <!-- 컨트롤 & 필터 영역 -->
+    <section class="controls-section">
+      <!-- 카테고리 필터 버튼 칩 -->
+      <div class="category-scroll-container" id="categoryChips">
+        <button type="button" class="category-chip active" data-category="ALL">전체</button>
+        <button type="button" class="category-chip" data-category="DIGITAL">디지털기기</button>
+        <button type="button" class="category-chip" data-category="FURNITURE">가구/인테리어</button>
+        <button type="button" class="category-chip" data-category="CLOTHES">의류</button>
+        <button type="button" class="category-chip" data-category="APPLIANCE">생활가전</button>
+        <button type="button" class="category-chip" data-category="BOOK_TICKET">도서/티켓</button>
+        <button type="button" class="category-chip" data-category="ETC">기타</button>
+      </div>
+
+      <!-- 서브 바 (결과 건수 및 거래가능 토글) -->
+      <div class="filter-sub-bar">
+        <div class="result-count">
+          등록된 꿀매물 <span id="itemCount">0</span>개
+        </div>
+
+        <!-- 거래 가능만 보기 토글 스위치 -->
+        <label class="toggle-wrapper" for="onlyAvailableToggle">
+          <span class="toggle-label">거래 가능만 보기</span>
+          <div class="switch">
+            <input type="checkbox" id="onlyAvailableToggle">
+            <span class="slider"></span>
+          </div>
+        </label>
+      </div>
+    </section>
+
+    <!-- 상품 카드 그리드 -->
+    <section class="product-grid" id="productGrid">
+      <!-- 동적 생성 -->
+    </section>
+
+    <!-- 결과 없음 (Empty State) -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🥔</div>
+      <div class="empty-title">감자 싹이 아직 안 텄어요!</div>
+      <div class="empty-desc">조건에 일치하는 중고 물품을 찾지 못했습니다. 검색어나 필터를 변경해보세요.</div>
+    </div>
+
+  </main>
+
+  <!-- 토스트 알림창 -->
+  <div class="toast-container">
+    <div id="toastMessage" class="toast-msg"></div>
+  </div>
+
+  <script>
+    /**
+     * [감자 마켓] 가짜 상품 데이터 (6개)
+     * 카테고리: DIGITAL, FURNITURE, CLOTHES, APPLIANCE, BOOK_TICKET, ETC
+     * 판매 상태: AVAILABLE(판매중), RESERVED(예약중), COMPLETED(거래 완료)
+     */
+    const INITIAL_PRODUCTS = [
+      {
+        id: "prod-001",
+        title: "에어팟 프로 2세대 풀박스 (충전케이블 미사용)",
+        category: "DIGITAL",
+        categoryName: "디지털기기",
+        location: "역삼동",
+        timeAgo: "10분 전",
+        price: 185000,
+        status: "AVAILABLE",
+        statusText: "판매중",
+        image: "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?auto=format&fit=crop&w=600&q=80",
+        likes: 12,
+        chats: 4
+      },
+      {
+        id: "prod-002",
+        title: "원목 화이트 원형 카페 식탁 테이블 (지름 100cm)",
+        category: "FURNITURE",
+        categoryName: "가구/인테리어",
+        location: "신사동",
+        timeAgo: "35분 전",
+        price: 45000,
+        status: "RESERVED",
+        statusText: "예약중",
+        image: "https://images.unsplash.com/photo-1530018607912-eff2daa1bac4?auto=format&fit=crop&w=600&q=80",
+        likes: 8,
+        chats: 6
+      },
+      {
+        id: "prod-003",
+        title: "다이슨 V10 무선 청소기 풀세트 (거치대 포함)",
+        category: "APPLIANCE",
+        categoryName: "생활가전",
+        location: "논현동",
+        timeAgo: "1시간 전",
+        price: 140000,
+        status: "COMPLETED",
+        statusText: "거래 완료",
+        image: "https://images.unsplash.com/photo-1558317374-067fb5f30001?auto=format&fit=crop&w=600&q=80",
+        likes: 19,
+        chats: 11
+      },
+      {
+        id: "prod-004",
+        title: "파타고니아 클래식 레트로-X 플리스 자켓 (사이즈 M)",
+        category: "CLOTHES",
+        categoryName: "의류",
+        location: "서초동",
+        timeAgo: "2시간 전",
+        price: 120000,
+        status: "AVAILABLE",
+        statusText: "판매중",
+        image: "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=600&q=80",
+        likes: 15,
+        chats: 3
+      },
+      {
+        id: "prod-005",
+        title: "2026 뮤지컬 '지킬 앤 하이드' 1층 VIP석 1매",
+        category: "BOOK_TICKET",
+        categoryName: "도서/티켓",
+        location: "청담동",
+        timeAgo: "3시간 전",
+        price: 95000,
+        status: "AVAILABLE",
+        statusText: "판매중",
+        image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
+        likes: 5,
+        chats: 2
+      },
+      {
+        id: "prod-006",
+        title: "🥔 강원도 햇 수미감자 10kg (포슬포슬 분나는 왕감자)",
+        category: "ETC",
+        categoryName: "기타",
+        location: "대치동",
+        timeAgo: "4시간 전",
+        price: 18000,
+        status: "AVAILABLE",
+        statusText: "판매중",
+        image: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=600&q=80",
+        likes: 27,
+        chats: 9
+      }
+    ];
+
+    /**
+     * 상태 관리 변수
+     */
+    let currentFilter = {
+      category: "ALL",
+      onlyAvailable: false,
+      keyword: ""
+    };
+
+    /**
+     * 외부 화면 연동 포인트 (Integration Points)
+     * 협업 개발자가 자신의 모달/페이지 함수를 연결할 수 있도록 사전에 등록하며,
+     * 없을 경우 커스텀 이벤트 발행 및 안내 토스트 알림을 띄웁니다.
+     */
+    window.openProductDetail = window.openProductDetail || function(productId) {
+      console.log(`[감자 마켓 연동] 상세 팝업 오픈 요청: ${productId}`);
+      
+      // 커스텀 이벤트 발송 (다른 모듈/스크립트에서 리스닝 가능)
+      const detailEvent = new CustomEvent('gamza:openProductDetail', {
+        detail: { productId: productId }
+      });
+      window.dispatchEvent(detailEvent);
+
+      // 단독 실행 시 사용자 피드백 안내
+      const product = INITIAL_PRODUCTS.find(p => p.id === productId);
+      showToast(`🥔 [상세보기] '${product ? product.title : productId}' 상세 화면 연동`);
+    };
+
+    window.openWriteModal = window.openWriteModal || function() {
+      console.log('[감자 마켓 연동] 글쓰기 화면/모달 오픈 요청');
+      
+      // 커스텀 이벤트 발송
+      const writeEvent = new CustomEvent('gamza:openWriteModal');
+      window.dispatchEvent(writeEvent);
+
+      // 단독 실행 시 사용자 피드백 안내
+      showToast('🥔 [글쓰기] 상품 등록 모달 연동 포인트 호출됨');
+    };
+
+    /**
+     * 토스트 메시지 헬퍼
+     */
+    let toastTimeout = null;
+    function showToast(message) {
+      const toastEl = document.getElementById('toastMessage');
+      if (!toastEl) return;
+      toastEl.textContent = message;
+      toastEl.classList.add('show');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toastEl.classList.remove('show');
+      }, 2400);
+    }
+
+    /**
+     * 가격 포맷터 (예: 185,000원)
+     */
+    function formatPrice(price) {
+      return price.toLocaleString('ko-KR') + '원';
+    }
+
+    /**
+     * 판매 상태 뱃지 렌더링 클래스 헬퍼
+     */
+    function getStatusBadgeClass(status) {
+      switch (status) {
+        case 'AVAILABLE': return 'badge-available';
+        case 'RESERVED': return 'badge-reserved';
+        case 'COMPLETED': return 'badge-completed';
+        default: return 'badge-available';
+      }
+    }
+
+    /**
+     * 카드 DOM 엘리먼트 생성
+     */
+    function createProductCard(product) {
+      const card = document.createElement('article');
+      card.className = `product-card ${product.status.toLowerCase()}`;
+      card.dataset.id = product.id;
+
+      card.innerHTML = `
+        <div class="card-thumb-wrap">
+          <img class="card-thumb" src="${product.image}" alt="${product.title}" loading="lazy">
+          <span class="badge-status ${getStatusBadgeClass(product.status)}">${product.statusText}</span>
+          <button type="button" class="like-btn" title="관심 등록" aria-label="관심 등록" onclick="event.stopPropagation(); toggleLike(this, '${product.id}')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="card-body">
+          <div>
+            <h2 class="card-title">${product.title}</h2>
+            <div class="card-meta">
+              <span>${product.location}</span>
+              <span class="card-meta-dot"></span>
+              <span>${product.timeAgo}</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="card-price">${formatPrice(product.price)}</div>
+            <div class="card-sub-info">
+              <span>💬 ${product.chats}</span>
+              <span>🤍 ${product.likes}</span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // 카드 클릭 시 상세 페이지/모달 오픈 연동
+      card.addEventListener('click', () => {
+        window.openProductDetail(product.id);
+      });
+
+      return card;
+    }
+
+    /**
+     * 찜 토글 헬퍼
+     */
+    function toggleLike(btnEl, productId) {
+      btnEl.classList.toggle('liked');
+      const svg = btnEl.querySelector('svg');
+      if (btnEl.classList.contains('liked')) {
+        svg.setAttribute('fill', 'currentColor');
+        showToast('관심 상품에 추가되었습니다 🧡');
+      } else {
+        svg.setAttribute('fill', 'none');
+        showToast('관심 상품에서 해제되었습니다.');
+      }
+    }
+
+    /**
+     * 필터링 및 리스트 재렌더링
+     */
+    function renderProductList() {
+      const grid = document.getElementById('productGrid');
+      const countEl = document.getElementById('itemCount');
+      const emptyState = document.getElementById('emptyState');
+      
+      const filtered = INITIAL_PRODUCTS.filter(item => {
+        // 카테고리 필터
+        if (currentFilter.category !== 'ALL' && item.category !== currentFilter.category) {
+          return false;
+        }
+        // 거래 가능만 보기 필터
+        if (currentFilter.onlyAvailable && item.status !== 'AVAILABLE') {
+          return false;
+        }
+        // 검색어 필터 (상품명 또는 지역명)
+        if (currentFilter.keyword.trim() !== '') {
+          const kw = currentFilter.keyword.toLowerCase().trim();
+          const matchTitle = item.title.toLowerCase().includes(kw);
+          const matchLocation = item.location.toLowerCase().includes(kw);
+          const matchCategory = item.categoryName.toLowerCase().includes(kw);
+          if (!matchTitle && !matchLocation && !matchCategory) {
+            return false;
+          }
+        }
+        return true;
+      });
+
+      // 개수 업데이트
+      countEl.textContent = filtered.length;
+      grid.innerHTML = '';
+
+      if (filtered.length === 0) {
+        emptyState.style.display = 'block';
+      } else {
+        emptyState.style.display = 'none';
+        filtered.forEach(product => {
+          const cardNode = createProductCard(product);
+          grid.appendChild(cardNode);
+        });
+      }
+    }
+
+    /**
+     * 이벤트 바인딩 및 초기화
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. 카테고리 칩 버튼 클릭
+      const categoryChips = document.querySelectorAll('.category-chip');
+      categoryChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          categoryChips.forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          currentFilter.category = chip.dataset.category;
+          renderProductList();
+        });
+      });
+
+      // 2. 거래 가능만 보기 토글
+      const toggle = document.getElementById('onlyAvailableToggle');
+      toggle.addEventListener('change', (e) => {
+        currentFilter.onlyAvailable = e.target.checked;
+        renderProductList();
+      });
+
+      // 3. 검색어 입력 (실시간 검색)
+      const searchInput = document.getElementById('searchInput');
+      searchInput.addEventListener('input', (e) => {
+        currentFilter.keyword = e.target.value;
+        renderProductList();
+      });
+
+      // 4. 글쓰기 버튼 클릭
+      const btnWrite = document.getElementById('btnWrite');
+      btnWrite.addEventListener('click', () => {
+        window.openWriteModal();
+      });
+
+      // 5. 로그인 버튼 클릭
+      const btnLogin = document.getElementById('btnLogin');
+      btnLogin.addEventListener('click', () => {
+        showToast('🥔 로그인 기능은 준비 중입니다.');
+      });
+
+      // 6. 로고 클릭 시 초기화
+      const brandLogo = document.getElementById('brandLogo');
+      brandLogo.addEventListener('click', (e) => {
+        e.preventDefault();
+        searchInput.value = '';
+        currentFilter = { category: "ALL", onlyAvailable: false, keyword: "" };
+        toggle.checked = false;
+        categoryChips.forEach(c => c.classList.remove('active'));
+        categoryChips[0].classList.add('active');
+        renderProductList();
+        showToast('전체 상품 목록으로 돌아왔습니다.');
+      });
+
+      // 첫 렌더링
+      renderProductList();
+    });
+  </script>
+</body>
+</html>

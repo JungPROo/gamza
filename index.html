@@ -1,0 +1,4118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>감자 마켓 - 따뜻하고 포근한 중고거래</title>
+  
+  <!-- 웹폰트: Pretendard -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  
+  <!-- Supabase JS Client v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    /* ==========================================================================
+       [디자인 시스템 & 토큰] 감자 마켓 - 브라운 포인트 & 밝고 따뜻한 톤
+       ========================================================================== */
+    :root {
+      /* 감자 메인 컬러 */
+      --potato-primary: #8c5828;      /* 따뜻한 구운 감자 브라운 */
+      --potato-primary-light: #b07d4b;/* 골든 감자 브라운 */
+      --potato-primary-dark: #6d421b; /* 딥 브라운 */
+      --potato-soft: #f4ede4;         /* 감자 속살 베이지 */
+      --potato-bg: #fdfaf6;           /* 밝고 부드러운 크림 아이보리 배경 */
+      --potato-card-bg: #ffffff;     /* 카드/모달 화이트 */
+      --potato-border: #ede1d3;       /* 감자 껍질 연한 테두리 */
+      --potato-border-focus: #ffbe1a; /* 밝은 옐로우 포커스 테두리 */
+      --potato-accent-orange: #e28743;/* 감자싹 오렌지 포인트 */
+
+      /* [신규] 시선을 끄는 밝은 노란색 포인트 컬러 시스템 */
+      --potato-yellow-main: #ffc82c;   /* 화사하고 밝은 노란색 */
+      --potato-yellow-light: #ffe57f;  /* 은은하고 밝은 소프트 옐로우 */
+      --potato-yellow-hover: #f5b400;  /* 호버 시 골드 옐로우 */
+      --potato-yellow-soft: #fff9e6;   /* 연한 버터 옐로우 배경 */
+      --potato-yellow-border: #ffd54f; /* 밝은 옐로우 테두리 */
+      --text-on-yellow: #3c2008;       /* 옐로우 위에서 가장 또렷한 딥 브라운 텍스트 */
+
+      /* 텍스트 색상 */
+      --text-main: #2b2520;           /* 선명한 다크 에스프레소 */
+      --text-sub: #6e6459;            /* 보조 텍스트 */
+      --text-muted: #a3988e;          /* 연한 텍스트 */
+
+      /* 상태 색상 */
+      --status-selling-bg: #eaf6ea;
+      --status-selling-text: #2e7d32;
+      --status-selling-border: #c8e6c9;
+
+      --status-reserved-bg: #fff4e5;
+      --status-reserved-text: #d97706;
+      --status-reserved-border: #ffe0b2;
+
+      --status-completed-bg: #eeeeee;
+      --status-completed-text: #757575;
+      --status-completed-border: #e0e0e0;
+
+      /* UI 라운딩 & 그림자 */
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-pill: 9999px;
+
+      --shadow-sm: 0 2px 8px rgba(110, 68, 30, 0.06);
+      --shadow-md: 0 6px 18px rgba(110, 68, 30, 0.10);
+      --shadow-lg: 0 12px 28px rgba(110, 68, 30, 0.16);
+      --shadow-modal: 0 24px 60px rgba(45, 25, 10, 0.28);
+
+      --transition-fast: 0.18s ease;
+      --transition-smooth: 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--potato-bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      background: none;
+    }
+
+    input, textarea, select {
+      font-family: inherit;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    /* ==========================================================================
+       [상단 네비게이션 헤더]
+       ========================================================================== */
+    .header-wrapper {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(253, 250, 246, 0.94);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--potato-border);
+      box-shadow: 0 2px 10px rgba(140, 88, 40, 0.04);
+    }
+
+    .header-container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.2rem;
+    }
+
+    /* 로고 */
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--potato-primary);
+      cursor: pointer;
+      user-select: none;
+      transition: transform var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .brand-logo:hover {
+      transform: scale(1.02);
+    }
+
+    .brand-logo .logo-emoji {
+      font-size: 1.7rem;
+      filter: drop-shadow(0 2px 4px rgba(140, 88, 40, 0.2));
+    }
+
+    .brand-logo span.tag {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--text-on-yellow);
+      background: linear-gradient(135deg, var(--potato-yellow-light), var(--potato-yellow-main));
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      letter-spacing: -0.2px;
+      vertical-align: middle;
+      margin-left: 2px;
+      box-shadow: 0 1px 4px rgba(255, 190, 26, 0.35);
+    }
+
+    /* 검색창 */
+    .search-wrapper {
+      flex: 1;
+      max-width: 480px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.65rem 1rem 0.65rem 2.65rem;
+      border: 1.5px solid var(--potato-border);
+      border-radius: var(--radius-pill);
+      background-color: #ffffff;
+      font-size: 0.94rem;
+      color: var(--text-main);
+      outline: none;
+      transition: all var(--transition-fast);
+    }
+
+    .search-input:focus {
+      border-color: var(--potato-yellow-main);
+      box-shadow: 0 0 0 3px rgba(255, 200, 44, 0.28);
+    }
+
+    .search-input::placeholder {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--potato-primary-light);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-clear-btn {
+      position: absolute;
+      right: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #e0d6cb;
+      color: #fff;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: bold;
+      transition: background var(--transition-fast);
+    }
+
+    .search-clear-btn:hover {
+      background: var(--potato-primary-light);
+    }
+
+    /* 헤더 우측 액션 */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      white-space: nowrap;
+    }
+
+    .btn-header-write {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.64rem 1.3rem;
+      font-size: 0.94rem;
+      font-weight: 800;
+      border-radius: var(--radius-pill);
+      background: linear-gradient(135deg, #ffe066 0%, #ffc107 100%);
+      color: var(--text-on-yellow);
+      box-shadow: 0 4px 14px rgba(255, 193, 7, 0.45);
+      transition: all var(--transition-fast);
+      border: 1px solid rgba(255, 179, 0, 0.4);
+    }
+
+    .btn-header-write:hover {
+      background: linear-gradient(135deg, #ffd54f 0%, #ffb300 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(255, 193, 7, 0.55);
+    }
+
+    .btn-header-login {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.6rem 1.1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: var(--radius-pill);
+      background-color: transparent;
+      color: var(--potato-primary);
+      border: 1.5px solid var(--potato-border);
+      transition: all var(--transition-fast);
+      cursor: pointer;
+    }
+
+    .btn-header-login:hover {
+      background-color: var(--potato-soft);
+      border-color: var(--potato-primary-light);
+    }
+
+    /* 로그인 후 헤더 사용자 영역 */
+    .header-user-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .user-nickname-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.9rem;
+      background: var(--potato-soft);
+      border: 1.5px solid var(--potato-border);
+      border-radius: var(--radius-pill);
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--potato-primary-dark);
+      cursor: default;
+      transition: all var(--transition-fast);
+    }
+
+    .user-nickname-badge:hover {
+      background: #eddccb;
+      border-color: var(--potato-primary-light);
+    }
+
+    .user-avatar-icon {
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-header-logout {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.48rem 0.95rem;
+      font-size: 0.84rem;
+      font-weight: 600;
+      border-radius: var(--radius-pill);
+      background-color: transparent;
+      color: var(--text-sub);
+      border: 1.5px solid var(--potato-border);
+      transition: all var(--transition-fast);
+      cursor: pointer;
+    }
+
+    .btn-header-logout:hover {
+      background-color: #fee2e2;
+      color: #dc2626;
+      border-color: #fca5a5;
+    }
+
+    /* ==========================================================================
+       [메인 컨테이너 레이아웃]
+       ========================================================================== */
+    .main-container {
+      max-width: 1140px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 4rem;
+      flex: 1;
+    }
+
+    /* 상단 감자 배너 */
+    .welcome-banner {
+      background: linear-gradient(135deg, #f7eee4 0%, #fae6d3 100%);
+      border: 1px solid var(--potato-border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.6rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .banner-text h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--potato-primary-dark);
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .banner-text p {
+      font-size: 0.92rem;
+      color: var(--text-sub);
+    }
+
+    .banner-tag {
+      background-color: #ffffff;
+      color: var(--potato-primary);
+      padding: 0.4rem 0.9rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.82rem;
+      font-weight: 700;
+      border: 1px solid var(--potato-border);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+    }
+
+    /* ==========================================================================
+       [화면 1] 상품 목록: 카테고리 & 필터 컨트롤
+       ========================================================================== */
+    .filter-section {
+      margin-bottom: 1.6rem;
+    }
+
+    /* 카테고리 가로 스크롤 리스트 */
+    .category-scroll-container {
+      overflow-x: auto;
+      padding-bottom: 0.4rem;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .category-scroll-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .category-chip-group {
+      display: flex;
+      gap: 0.55rem;
+      align-items: center;
+    }
+
+    .category-chip {
+      padding: 0.52rem 1.15rem;
+      font-size: 0.92rem;
+      font-weight: 600;
+      border-radius: var(--radius-pill);
+      background-color: #ffffff;
+      color: var(--text-sub);
+      border: 1px solid var(--potato-border);
+      white-space: nowrap;
+      transition: all var(--transition-fast);
+      user-select: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .category-chip:hover {
+      border-color: var(--potato-primary-light);
+      background-color: var(--potato-soft);
+      color: var(--potato-primary-dark);
+    }
+
+    .category-chip.active {
+      background: linear-gradient(135deg, #ffe066 0%, #ffc107 100%);
+      color: var(--text-on-yellow);
+      border-color: #ffb300;
+      font-weight: 800;
+      box-shadow: 0 3px 10px rgba(255, 193, 7, 0.35);
+    }
+
+    /* 목록 제어 바 (카운트 & 거래가능 토글) */
+    .list-control-bar {
+      margin-top: 1.1rem;
+      padding: 0.75rem 0.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--potato-border);
+    }
+
+    .list-count-wrap {
+      font-size: 0.98rem;
+      color: var(--text-main);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .list-count-num {
+      color: #e69500;
+      font-weight: 800;
+    }
+
+    /* '거래 가능만 보기' 토글 스위치 */
+    .toggle-filter-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle-filter-label {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #dfd7cf;
+      transition: var(--transition-fast);
+      border-radius: var(--radius-pill);
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: var(--transition-fast);
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    input:checked + .slider {
+      background: linear-gradient(135deg, #ffd54f 0%, #ffb300 100%);
+      box-shadow: 0 0 8px rgba(255, 193, 7, 0.4);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* ==========================================================================
+       [화면 1] 상품 카드 그리드 & 카드 디자인
+       ========================================================================== */
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.4rem;
+      margin-top: 1.5rem;
+    }
+
+    .product-card {
+      background: var(--potato-card-bg);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--potato-border);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+    }
+
+    .product-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 22px rgba(255, 193, 7, 0.18), 0 4px 12px rgba(110, 68, 30, 0.08);
+      border-color: var(--potato-yellow-border);
+    }
+
+    /* 카드 썸네일 */
+    .card-thumb-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 75%; /* 4:3 비율 */
+      overflow: hidden;
+      background-color: var(--potato-soft);
+    }
+
+    .card-thumb {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.35s ease;
+    }
+
+    .product-card:hover .card-thumb {
+      transform: scale(1.04);
+    }
+
+    /* 거래 완료 카드 흑백 처리 */
+    .product-card.completed .card-thumb {
+      filter: grayscale(60%) brightness(0.9);
+    }
+
+    /* 상태 뱃지 공통 */
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: var(--radius-pill);
+      letter-spacing: -0.2px;
+    }
+
+    .badge-status.selling {
+      background-color: var(--status-selling-bg);
+      color: var(--status-selling-text);
+      border: 1px solid var(--status-selling-border);
+    }
+
+    .badge-status.reserved {
+      background-color: var(--status-reserved-bg);
+      color: var(--status-reserved-text);
+      border: 1px solid var(--status-reserved-border);
+    }
+
+    .badge-status.completed {
+      background-color: var(--status-completed-bg);
+      color: var(--status-completed-text);
+      border: 1px solid var(--status-completed-border);
+    }
+
+    .badge-status::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: currentColor;
+    }
+
+    .card-thumb-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 2;
+      backdrop-filter: blur(4px);
+    }
+
+    .card-body {
+      padding: 1.1rem 1.15rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.38;
+      margin-bottom: 0.45rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-meta {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .card-author {
+      font-weight: 700;
+      color: var(--potato-primary);
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: var(--potato-soft);
+      padding: 1px 7px;
+      border-radius: var(--radius-pill);
+      font-size: 0.78rem;
+      border: 1px solid var(--potato-border);
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .card-meta-dot {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background-color: var(--text-muted);
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px dashed var(--potato-border);
+      padding-top: 0.75rem;
+      margin-top: 0.2rem;
+    }
+
+    .card-price {
+      font-size: 1.18rem;
+      font-weight: 800;
+      color: var(--potato-primary-dark);
+      letter-spacing: -0.3px;
+    }
+
+    .card-price.free {
+      color: #e69500;
+      font-weight: 800;
+    }
+
+    .card-category-tag {
+      font-size: 0.75rem;
+      color: var(--potato-primary);
+      background-color: var(--potato-soft);
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      font-weight: 600;
+    }
+
+    /* 검색/필터 결과 없음 (Empty State) */
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 4.5rem 1rem;
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      border: 1px dashed var(--potato-border);
+      display: none;
+    }
+
+    .empty-icon {
+      font-size: 3.5rem;
+      margin-bottom: 1rem;
+      animation: float 2.4s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .empty-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--potato-primary);
+      margin-bottom: 0.4rem;
+    }
+
+    .empty-desc {
+      font-size: 0.92rem;
+      color: var(--text-sub);
+      margin-bottom: 1.2rem;
+    }
+
+    .btn-reset-filter {
+      padding: 0.55rem 1.2rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      background-color: var(--potato-soft);
+      color: var(--potato-primary);
+      border-radius: var(--radius-pill);
+      transition: all var(--transition-fast);
+    }
+
+    .btn-reset-filter:hover {
+      background-color: var(--potato-primary-light);
+      color: #fff;
+    }
+
+    /* ==========================================================================
+       [화면 2] 상세 팝업 (모달) 스타일
+       ========================================================================== */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(35, 23, 14, 0.55);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity var(--transition-smooth), visibility var(--transition-smooth);
+      padding: 16px;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .detail-modal-dialog {
+      background: var(--potato-card-bg);
+      width: 100%;
+      max-width: 540px;
+      max-height: 90vh;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-modal);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transform: scale(0.92) translateY(20px);
+      transition: transform var(--transition-smooth);
+      border: 1px solid var(--potato-border);
+    }
+
+    .modal-overlay.active .detail-modal-dialog {
+      transform: scale(1) translateY(0);
+    }
+
+    /* 모달 닫기 버튼 (글래스모피즘 우상단) */
+    .modal-close-btn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(30, 20, 10, 0.48);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 20;
+      transition: all var(--transition-fast);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-close-btn:hover {
+      background: rgba(30, 20, 10, 0.85);
+      transform: rotate(90deg) scale(1.08);
+    }
+
+    .detail-scroll-area {
+      overflow-y: auto;
+      flex: 1;
+      scrollbar-width: thin;
+      scrollbar-color: var(--potato-primary-light) transparent;
+    }
+
+    .detail-scroll-area::-webkit-scrollbar {
+      width: 6px;
+    }
+    .detail-scroll-area::-webkit-scrollbar-thumb {
+      background: var(--potato-primary-light);
+      border-radius: var(--radius-pill);
+    }
+
+    /* 위쪽 절반: 상품 대표 이미지 */
+    .detail-media-wrap {
+      position: relative;
+      width: 100%;
+      height: 330px;
+      background: var(--potato-soft);
+      overflow: hidden;
+    }
+
+    .detail-media-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .detail-media-wrap::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 60px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 100%);
+      pointer-events: none;
+    }
+
+    /* 본문 영역 */
+    .detail-content-wrap {
+      padding: 1.35rem 1.35rem 1rem;
+    }
+
+    .detail-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 0.85rem;
+    }
+
+    .detail-tag-category {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--potato-primary);
+      background-color: var(--potato-soft);
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+    }
+
+    .detail-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.35;
+      margin-bottom: 0.55rem;
+    }
+
+    .detail-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 1.1rem;
+    }
+
+    .detail-price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 1.25rem;
+      padding-bottom: 1.1rem;
+      border-bottom: 1px solid var(--potato-border);
+    }
+
+    .detail-price {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: var(--potato-primary-dark);
+      letter-spacing: -0.5px;
+    }
+
+    .detail-price-badge {
+      font-size: 0.8rem;
+      background: var(--potato-yellow-soft);
+      color: #945800;
+      border: 1px solid var(--potato-yellow-border);
+      padding: 3px 10px;
+      border-radius: var(--radius-pill);
+      font-weight: 700;
+      box-shadow: 0 1px 4px rgba(255, 193, 7, 0.2);
+    }
+
+    /* 판매자 정보 카드 */
+    .seller-card {
+      background: var(--potato-bg);
+      border: 1px solid var(--potato-border);
+      border-radius: var(--radius-md);
+      padding: 0.95rem 1.1rem;
+      margin-bottom: 1.3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .seller-profile-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .seller-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #e6dacd;
+      border: 2px solid #ffffff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .seller-info h4 {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 2px;
+    }
+
+    .seller-info p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .seller-manner-wrap {
+      text-align: right;
+    }
+
+    .manner-temp {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--potato-primary-light);
+    }
+
+    .manner-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      display: block;
+    }
+
+    .manner-bar {
+      width: 65px;
+      height: 4px;
+      background: #e8ded4;
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 3px;
+    }
+
+    .manner-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ffe066, #ffb300);
+      border-radius: 99px;
+      box-shadow: 0 0 6px rgba(255, 193, 7, 0.4);
+    }
+
+    /* 상품 상세 설명 */
+    .detail-desc-wrap {
+      margin-bottom: 1.5rem;
+    }
+
+    .detail-desc-title {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: var(--text-sub);
+      margin-bottom: 0.6rem;
+    }
+
+    .detail-desc {
+      font-size: 0.96rem;
+      line-height: 1.68;
+      color: var(--text-main);
+      white-space: pre-line;
+      word-break: break-word;
+    }
+
+    /* 하단 고정 액션 버튼 바 */
+    .detail-actions-bar {
+      padding: 0.95rem 1.35rem;
+      background: #ffffff;
+      border-top: 1px solid var(--potato-border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-like-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 52px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      border: 1.5px solid var(--potato-border);
+      background-color: transparent;
+      color: var(--text-sub);
+      font-size: 1.3rem;
+      transition: all var(--transition-fast);
+      flex-shrink: 0;
+    }
+
+    .btn-like-action:hover {
+      background-color: var(--potato-yellow-soft);
+      border-color: var(--potato-yellow-border);
+    }
+
+    .btn-like-action.liked {
+      background-color: #fff0f0;
+      border-color: #ffb3b3;
+      color: #e5484d;
+    }
+
+    .btn-chat-action {
+      flex: 1;
+      height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #ffe066 0%, #ffc107 100%);
+      color: var(--text-on-yellow);
+      font-size: 1.02rem;
+      font-weight: 800;
+      border-radius: var(--radius-md);
+      box-shadow: 0 4px 14px rgba(255, 193, 7, 0.45);
+      border: 1px solid rgba(255, 179, 0, 0.4);
+      transition: all var(--transition-fast);
+    }
+
+    .btn-chat-action:hover {
+      background: linear-gradient(135deg, #ffd54f 0%, #ffb300 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(255, 193, 7, 0.55);
+    }
+
+    /* ==========================================================================
+       [화면 4] 1:1 감자톡 채팅 화면 (모달) 스타일
+       ========================================================================== */
+    .chat-modal-dialog {
+      background: #fbf8f4;
+      width: 100%;
+      max-width: 500px;
+      height: 90vh;
+      max-height: 720px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-modal);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transform: scale(0.92) translateY(20px);
+      transition: transform var(--transition-smooth);
+      border: 1px solid var(--potato-border);
+    }
+
+    .modal-overlay.active .chat-modal-dialog {
+      transform: scale(1) translateY(0);
+    }
+
+    .chat-modal-header {
+      background: #ffffff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--potato-border);
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    .chat-header-user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .chat-header-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #e6dacd;
+      border: 1.5px solid var(--potato-border);
+      flex-shrink: 0;
+    }
+
+    .chat-header-meta {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .chat-header-nick-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chat-header-nick {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chat-header-sub {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chat-header-manner {
+      font-weight: 700;
+      color: var(--potato-primary-dark);
+      background: var(--potato-yellow-soft);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    .chat-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .btn-chat-header-action {
+      background: transparent;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-sub);
+      transition: background var(--transition-fast);
+    }
+
+    .btn-chat-header-action:hover {
+      background: var(--potato-soft);
+      color: var(--potato-primary-dark);
+    }
+
+    /* 상품 요약 바 */
+    .chat-product-summary-bar {
+      background: #ffffff;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--potato-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(90, 60, 30, 0.03);
+    }
+
+    .chat-prod-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+      cursor: pointer;
+    }
+
+    .chat-prod-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      background: var(--potato-soft);
+      border: 1px solid var(--potato-border);
+      flex-shrink: 0;
+    }
+
+    .chat-prod-info {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .chat-prod-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chat-prod-price {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: var(--potato-primary-dark);
+    }
+
+    .chat-prod-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .btn-chat-promise {
+      background: var(--potato-yellow-main);
+      color: var(--text-on-yellow);
+      border: none;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      box-shadow: 0 2px 6px rgba(255, 200, 44, 0.25);
+    }
+
+    .btn-chat-promise:hover {
+      background: var(--potato-yellow-hover);
+    }
+
+    /* 채팅 스크롤 영역 */
+    .chat-messages-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 14px 14px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #fbf8f4;
+    }
+
+    .chat-bubble-date {
+      text-align: center;
+      margin: 4px 0;
+    }
+
+    .chat-bubble-date span {
+      background: rgba(215, 200, 185, 0.5);
+      color: var(--text-sub);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 12px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    .chat-safe-banner {
+      background: #ffffff;
+      border: 1px solid #ebd9c8;
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-size: 0.76rem;
+      color: var(--text-sub);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      line-height: 1.4;
+    }
+
+    .chat-safe-banner strong {
+      color: var(--potato-primary-dark);
+    }
+
+    .chat-msg-row {
+      display: flex;
+      gap: 8px;
+      max-width: 84%;
+    }
+
+    .chat-msg-row.other {
+      align-self: flex-start;
+    }
+
+    .chat-msg-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--potato-soft);
+      border: 1px solid var(--potato-border);
+      flex-shrink: 0;
+    }
+
+    .chat-msg-col {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .chat-msg-name {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .chat-msg-box-wrap {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+    }
+
+    .chat-msg-other-box {
+      background: #ffffff;
+      color: var(--text-main);
+      padding: 9px 13px;
+      border-radius: 4px 16px 16px 16px;
+      font-size: 0.88rem;
+      line-height: 1.45;
+      border: 1px solid var(--potato-border);
+      word-break: break-word;
+      box-shadow: 0 1px 4px rgba(90, 60, 30, 0.04);
+    }
+
+    .chat-msg-row.mine {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .chat-msg-row.mine .chat-msg-box-wrap {
+      flex-direction: row-reverse;
+    }
+
+    .chat-msg-mine-box {
+      background: linear-gradient(135deg, #8c5828 0%, #76441b 100%);
+      color: #ffffff;
+      padding: 9px 13px;
+      border-radius: 16px 4px 16px 16px;
+      font-size: 0.88rem;
+      line-height: 1.45;
+      word-break: break-word;
+      box-shadow: 0 2px 6px rgba(118, 68, 27, 0.2);
+    }
+
+    .chat-msg-time {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    /* 빠른 답변 칩 바 */
+    .chat-quick-chips-bar {
+      padding: 6px 12px;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      white-space: nowrap;
+      background: #fbf8f4;
+      border-top: 1px solid var(--potato-border);
+    }
+
+    .chat-quick-chips-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .chat-mini-chip {
+      background: #ffffff;
+      border: 1px solid var(--potato-border);
+      color: var(--text-sub);
+      font-size: 0.74rem;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .chat-mini-chip:hover {
+      background: var(--potato-yellow-soft);
+      border-color: var(--potato-yellow-main);
+      color: var(--text-on-yellow);
+    }
+
+    /* 하단 입력 영역 */
+    .chat-modal-footer {
+      background: #ffffff;
+      border-top: 1px solid var(--potato-border);
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .chat-input-field {
+      flex: 1;
+      height: 38px;
+      background: var(--potato-bg);
+      border: 1.5px solid var(--potato-border);
+      border-radius: 20px;
+      padding: 0 14px;
+      font-size: 0.88rem;
+      color: var(--text-main);
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .chat-input-field:focus {
+      border-color: var(--potato-primary);
+      background: #ffffff;
+    }
+
+    .btn-chat-modal-send {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: none;
+      background: var(--potato-yellow-main);
+      color: var(--text-on-yellow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+    }
+
+    .btn-chat-modal-send:disabled {
+      background: #e2dad1;
+      color: #9e958a;
+      cursor: not-allowed;
+    }
+
+    .btn-chat-modal-send:not(:disabled):hover {
+      background: var(--potato-yellow-hover);
+      transform: scale(1.05);
+    }
+
+    /* ==========================================================================
+       [화면 3] 글쓰기 화면 (모달/폼) 스타일
+       ========================================================================== */
+    .write-modal-dialog {
+      background: var(--potato-card-bg);
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-modal);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transform: scale(0.92) translateY(20px);
+      transition: transform var(--transition-smooth);
+      border: 1px solid var(--potato-border);
+    }
+
+    .modal-overlay.active .write-modal-dialog {
+      transform: scale(1) translateY(0);
+    }
+
+    .write-header {
+      padding: 1.15rem 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--potato-border);
+      background-color: var(--potato-bg);
+    }
+
+    .write-header h2 {
+      font-size: 1.18rem;
+      font-weight: 800;
+      color: var(--potato-primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-write-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-sub);
+      transition: background var(--transition-fast);
+    }
+
+    .btn-write-close:hover {
+      background: var(--potato-soft);
+      color: var(--text-main);
+    }
+
+    .write-body-scroll {
+      padding: 1.4rem 1.4rem 1.6rem;
+      overflow-y: auto;
+      flex: 1;
+      scrollbar-width: thin;
+      scrollbar-color: var(--potato-primary-light) transparent;
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.45rem;
+    }
+
+    .form-label .req {
+      color: #e5484d;
+      margin-left: 2px;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 0.72rem 0.95rem;
+      border: 1.5px solid var(--potato-border);
+      border-radius: var(--radius-sm);
+      font-size: 0.94rem;
+      color: var(--text-main);
+      background-color: #ffffff;
+      outline: none;
+      transition: all var(--transition-fast);
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--potato-yellow-main);
+      box-shadow: 0 0 0 3px rgba(255, 200, 44, 0.28);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 110px;
+      line-height: 1.5;
+    }
+
+    /* 이미지 입력 & 미리보기 영역 */
+    .image-input-container {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .image-preview-box {
+      width: 96px;
+      height: 96px;
+      border-radius: var(--radius-sm);
+      border: 1.5px dashed var(--potato-border);
+      background: var(--potato-soft);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+      position: relative;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .image-preview-box:hover {
+      border-color: var(--potato-primary);
+      background-color: var(--potato-yellow-soft);
+    }
+
+    .btn-device-upload {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0.52rem 0.95rem;
+      background: #ffffff;
+      border: 1.5px solid var(--potato-primary-light);
+      border-radius: var(--radius-sm);
+      color: var(--potato-primary-dark);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .btn-device-upload:hover {
+      background: var(--potato-yellow-main);
+      color: var(--text-on-yellow);
+      border-color: #ffb300;
+    }
+
+    .btn-remove-img {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(43, 37, 32, 0.75);
+      color: #ffffff;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: none;
+      transition: background var(--transition-fast);
+    }
+
+    .btn-remove-img:hover {
+      background: #e5484d;
+    }
+
+    .image-preview-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .image-preview-placeholder {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .image-url-inputs {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .preset-img-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .preset-chip {
+      font-size: 0.74rem;
+      background: var(--potato-soft);
+      color: var(--potato-primary);
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--potato-border);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .preset-chip:hover {
+      background: var(--potato-yellow-main);
+      color: var(--text-on-yellow);
+      border-color: #ffb300;
+      font-weight: 700;
+    }
+
+    /* 판매 상태 선택 라디오 버튼 그룹 */
+    .status-radio-group {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .status-radio-label {
+      border: 1.5px solid var(--potato-border);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 0.5rem;
+      text-align: center;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .status-radio-label:hover {
+      background-color: var(--potato-yellow-soft);
+      border-color: var(--potato-yellow-border);
+    }
+
+    .status-radio-input {
+      display: none;
+    }
+
+    .status-radio-input:checked + .status-radio-label {
+      background: linear-gradient(135deg, #ffe066 0%, #ffc107 100%);
+      border-color: #ffb300;
+      color: var(--text-on-yellow);
+      font-weight: 800;
+      box-shadow: 0 3px 10px rgba(255, 193, 7, 0.35);
+    }
+
+    /* 가격 입력 보조 텍스트 */
+    .price-helper-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .price-korean {
+      color: #e69500;
+      font-weight: 800;
+    }
+
+    /* 글쓰기 모달 푸터 버튼 */
+    .write-footer {
+      padding: 1rem 1.4rem;
+      background: #ffffff;
+      border-top: 1px solid var(--potato-border);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .btn-form-cancel {
+      padding: 0.65rem 1.2rem;
+      font-size: 0.93rem;
+      font-weight: 600;
+      color: var(--text-sub);
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--potato-border);
+      transition: all var(--transition-fast);
+    }
+
+    .btn-form-cancel:hover {
+      background-color: var(--potato-soft);
+      color: var(--text-main);
+    }
+
+    .btn-form-submit {
+      padding: 0.68rem 1.7rem;
+      font-size: 0.96rem;
+      font-weight: 800;
+      color: var(--text-on-yellow);
+      background: linear-gradient(135deg, #ffe066 0%, #ffc107 100%);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 4px 14px rgba(255, 193, 7, 0.45);
+      border: 1px solid rgba(255, 179, 0, 0.4);
+      transition: all var(--transition-fast);
+    }
+
+    .btn-form-submit:hover {
+      background: linear-gradient(135deg, #ffd54f 0%, #ffb300 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(255, 193, 7, 0.55);
+    }
+
+    /* ==========================================================================
+       [인증(로그인/회원가입) 모달 스타일]
+       ========================================================================== */
+    .auth-modal-dialog {
+      background: var(--potato-card-bg);
+      width: 100%;
+      max-width: 420px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-modal);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transform: scale(0.92) translateY(20px);
+      transition: transform var(--transition-smooth);
+      border: 1px solid var(--potato-border);
+    }
+
+    .modal-overlay.active .auth-modal-dialog {
+      transform: scale(1) translateY(0);
+    }
+
+    .auth-header {
+      padding: 1.5rem 1.4rem 1rem;
+      text-align: center;
+      position: relative;
+      background: linear-gradient(180deg, #fdf8f2 0%, #ffffff 100%);
+      border-bottom: 1px solid var(--potato-border);
+    }
+
+    .auth-logo-badge {
+      font-size: 2.2rem;
+      margin-bottom: 0.3rem;
+      display: inline-block;
+      animation: float 2.6s ease-in-out infinite;
+    }
+
+    .auth-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--potato-primary-dark);
+      letter-spacing: -0.3px;
+    }
+
+    .auth-subtitle {
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .auth-notice-box {
+      margin: 0.85rem 0 0.1rem;
+      padding: 0.6rem 0.85rem;
+      background: var(--potato-yellow-soft);
+      border: 1px solid var(--potato-yellow-border);
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      color: #7c4a03;
+      font-weight: 700;
+      display: none;
+      align-items: center;
+      gap: 6px;
+      text-align: left;
+    }
+
+    .auth-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--potato-border);
+      background-color: var(--potato-bg);
+    }
+
+    .auth-tab-btn {
+      flex: 1;
+      padding: 0.85rem 0;
+      font-size: 0.94rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .auth-tab-btn.active {
+      color: var(--potato-primary-dark);
+      border-bottom-color: var(--potato-primary);
+      background: #ffffff;
+    }
+
+    .auth-body {
+      padding: 1.4rem 1.4rem 1.6rem;
+    }
+
+    .auth-input-group {
+      margin-bottom: 0.95rem;
+    }
+
+    .auth-label {
+      display: block;
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.35rem;
+    }
+
+    .auth-label .req {
+      color: #e5484d;
+      margin-left: 2px;
+    }
+
+    .auth-input {
+      width: 100%;
+      padding: 0.72rem 0.95rem;
+      border: 1.5px solid var(--potato-border);
+      border-radius: var(--radius-sm);
+      font-size: 0.92rem;
+      background-color: #ffffff;
+      outline: none;
+      transition: all var(--transition-fast);
+      box-sizing: border-box;
+    }
+
+    .auth-input:focus {
+      border-color: var(--potato-yellow-main);
+      box-shadow: 0 0 0 3px rgba(255, 200, 44, 0.25);
+    }
+
+    .auth-btn-submit {
+      width: 100%;
+      padding: 0.82rem;
+      font-size: 0.98rem;
+      font-weight: 800;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: linear-gradient(135deg, #ffe066 0%, #ffc107 100%);
+      color: var(--text-on-yellow);
+      box-shadow: 0 4px 14px rgba(255, 193, 7, 0.45);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      margin-top: 0.5rem;
+    }
+
+    .auth-btn-submit:hover {
+      background: linear-gradient(135deg, #ffd54f 0%, #ffb300 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(255, 193, 7, 0.55);
+    }
+
+    .auth-btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .auth-switch-link {
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 0.84rem;
+      color: var(--text-sub);
+    }
+
+    .auth-switch-link a {
+      color: var(--potato-primary);
+      font-weight: 700;
+      text-decoration: underline;
+      cursor: pointer;
+      margin-left: 4px;
+    }
+
+    .auth-message-box {
+      margin-top: 0.9rem;
+      padding: 0.65rem 0.85rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.83rem;
+      display: none;
+      line-height: 1.45;
+    }
+
+    .auth-message-box.error {
+      display: block;
+      background-color: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fca5a5;
+    }
+
+    .auth-message-box.success {
+      display: block;
+      background-color: #eaf6ea;
+      color: #2e7d32;
+      border: 1px solid #c8e6c9;
+    }
+
+    /* ==========================================================================
+       [토스트 알림 피드백]
+       ========================================================================== */
+    .potato-toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(30px);
+      background: rgba(43, 37, 32, 0.95);
+      color: #ffffff;
+      padding: 0.75rem 1.4rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.92rem;
+      font-weight: 600;
+      border: 1px solid rgba(255, 200, 44, 0.35);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 0 12px rgba(255, 193, 7, 0.2);
+      z-index: 2000;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.28s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .potato-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ==========================================================================
+       [반응형 미디어 쿼리 (스마트폰 & 태블릿 최적화)]
+       ========================================================================== */
+    @media (max-width: 960px) {
+      .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.1rem;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .header-container {
+        padding: 0.75rem 1rem;
+        flex-wrap: wrap;
+        gap: 0.7rem;
+      }
+
+      .brand-logo {
+        font-size: 1.3rem;
+      }
+
+      .search-wrapper {
+        order: 3;
+        max-width: 100%;
+        width: 100%;
+      }
+
+      .header-actions {
+        order: 2;
+      }
+
+      .btn-header-write {
+        padding: 0.5rem 0.95rem;
+        font-size: 0.85rem;
+      }
+
+      .btn-header-login {
+        padding: 0.48rem 0.85rem;
+        font-size: 0.85rem;
+      }
+
+      .welcome-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 1.1rem 1.2rem;
+      }
+
+      .main-container {
+        padding: 1rem 1rem 3rem;
+      }
+
+      .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.85rem;
+      }
+
+      .card-body {
+        padding: 0.85rem;
+      }
+
+      .card-title {
+        font-size: 0.93rem;
+      }
+
+      .card-price {
+        font-size: 1.05rem;
+      }
+
+      .card-meta {
+        font-size: 0.76rem;
+      }
+
+      /* 모바일에서는 모달을 바텀시트 느낌으로 전환 */
+      .modal-overlay {
+        padding: 0;
+        align-items: flex-end;
+      }
+
+      .detail-modal-dialog, .write-modal-dialog, .chat-modal-dialog, .auth-modal-dialog {
+        max-width: 100%;
+        max-height: 92vh;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        transform: translateY(100%);
+      }
+
+      .modal-overlay.active .detail-modal-dialog,
+      .modal-overlay.active .write-modal-dialog,
+      .modal-overlay.active .chat-modal-dialog,
+      .modal-overlay.active .auth-modal-dialog {
+        transform: translateY(0);
+      }
+
+      .detail-media-wrap {
+        height: 260px;
+      }
+
+      .image-input-container {
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .product-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================
+       [헤더 네비게이션] 로고, 검색창, [글쓰기], [로그인]
+       ======================================================================== -->
+  <header class="header-wrapper">
+    <div class="header-container">
+      <div class="brand-logo" id="brandLogo" title="홈으로 / 필터 초기화">
+        <span class="logo-emoji">🥔</span>
+        <span>감자 마켓</span>
+        <span class="tag">동네마켓</span>
+      </div>
+
+      <div class="search-wrapper">
+        <span class="search-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </span>
+        <input type="text" id="searchInput" class="search-input" placeholder="상품명, 동네명 검색 (예: 아이패드, 역삼동)">
+        <button type="button" id="searchClearBtn" class="search-clear-btn" aria-label="검색어 지우기">✕</button>
+      </div>
+
+      <div class="header-actions">
+        <span id="supabaseStatusBadge" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 600; padding: 5px 12px; border-radius: 9999px; background: #eaf6ea; color: #2e7d32; border: 1px solid #c8e6c9;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #2e7d32; display: inline-block; animation: pulse 2s infinite;"></span>
+          <span id="supabaseStatusText">Supabase 연결됨</span>
+        </span>
+        <button type="button" class="btn-header-write" id="btnOpenWrite">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+          </svg>
+          <span>글쓰기</span>
+        </button>
+        <!-- 로그인 전 표시되는 버튼 -->
+        <button type="button" class="btn-header-login" id="btnOpenLogin">로그인</button>
+
+        <!-- 로그인 후 표시되는 영역 (닉네임 + 로그아웃) -->
+        <div class="header-user-wrap" id="headerUserWrap" style="display: none;">
+          <div class="user-nickname-badge" id="userNicknameBadge" title="로그인된 계정">
+            <span class="user-avatar-icon">🥔</span>
+            <span id="headerUserNickname">닉네임</span>
+          </div>
+          <button type="button" class="btn-header-logout" id="btnLogout">로그아웃</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       [메인 콘텐츠 영역]
+       ======================================================================== -->
+  <main class="main-container">
+
+    <!-- 감자 환영 배너 -->
+    <section class="welcome-banner">
+      <div class="banner-text">
+        <h1>포슬포슬 따뜻한 이웃 간 중고거래 🥔</h1>
+        <p>우리 동네에서 갓 수확한 싱싱한 거래를 감자 마켓에서 만나보세요!</p>
+      </div>
+      <div class="banner-tag">
+        <span>📍 내 동네 설정: 강남구 역삼동</span>
+      </div>
+    </section>
+
+    <!-- [화면 1] 카테고리 필터 & 컨트롤 -->
+    <section class="filter-section">
+      <div class="category-scroll-container">
+        <div class="category-chip-group" id="categoryGroup">
+          <button type="button" class="category-chip active" data-category="ALL">🥔 전체</button>
+          <button type="button" class="category-chip" data-category="디지털기기">📱 디지털기기</button>
+          <button type="button" class="category-chip" data-category="가구/인테리어">🪑 가구/인테리어</button>
+          <button type="button" class="category-chip" data-category="의류">👕 의류</button>
+          <button type="button" class="category-chip" data-category="생활가전">🔌 생활가전</button>
+          <button type="button" class="category-chip" data-category="도서/티켓">📚 도서/티켓</button>
+          <button type="button" class="category-chip" data-category="기타">🎁 기타</button>
+        </div>
+      </div>
+
+      <div class="list-control-bar">
+        <div class="list-count-wrap">
+          <span>등록된 감자 매물</span>
+          <span class="list-count-num" id="totalProductCount">6</span>개
+        </div>
+
+        <label class="toggle-filter-wrap" for="onlyAvailableToggle">
+          <span class="toggle-filter-label">거래 가능만 보기</span>
+          <div class="switch">
+            <input type="checkbox" id="onlyAvailableToggle">
+            <span class="slider"></span>
+          </div>
+        </label>
+      </div>
+    </section>
+
+    <!-- [화면 1] 6개 상품 카드 그리드 -->
+    <section class="product-grid" id="productGrid">
+      <!-- JavaScript로 카드 렌더링 -->
+    </section>
+
+    <!-- 검색 결과 없을 때 화면 -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🥔</div>
+      <h3 class="empty-title">찾으시는 감자가 아직 없어요!</h3>
+      <p class="empty-desc">검색어나 카테고리 필터를 변경해 보시거나 첫 매물을 등록해 보세요.</p>
+      <button type="button" class="btn-reset-filter" id="btnResetSearch">전체 상품 보기</button>
+    </div>
+
+  </main>
+
+  <!-- ========================================================================
+       [화면 2] 상세 팝업 (모달)
+       ======================================================================== -->
+  <div class="modal-overlay" id="detailModalOverlay">
+    <div class="detail-modal-dialog" id="detailDialog">
+      <!-- 닫기 버튼 -->
+      <button type="button" class="modal-close-btn" id="btnDetailClose" title="닫기" aria-label="닫기">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <!-- 스크롤 상세 본문 -->
+      <div class="detail-scroll-area">
+        <!-- 위쪽 절반: 대표 이미지 -->
+        <div class="detail-media-wrap">
+          <img src="" alt="상품 상세 이미지" class="detail-media-img" id="detailImage">
+        </div>
+
+        <!-- 하단 정보 영역 -->
+        <div class="detail-content-wrap">
+          <div class="detail-badge-row">
+            <span class="badge-status" id="detailStatusBadge">판매중</span>
+            <span class="detail-tag-category" id="detailCategory">카테고리</span>
+          </div>
+
+          <h2 class="detail-title" id="detailTitle">상품명</h2>
+
+          <div class="detail-meta-row">
+            <span class="card-author" id="detailMetaAuthor">🥔 감자이웃</span>
+            <span class="card-meta-dot"></span>
+            <span id="detailLocation">거래동네</span>
+            <span class="card-meta-dot"></span>
+            <span id="detailTimeAgo">시간</span>
+          </div>
+
+          <div class="detail-price-row">
+            <span class="detail-price" id="detailPrice">0원</span>
+            <span class="detail-price-badge" id="detailPriceBadge">가격 제안 불가</span>
+          </div>
+
+          <!-- 판매자 정보 -->
+          <div class="seller-card">
+            <div class="seller-profile-wrap">
+              <img src="" alt="판매자 프로필" class="seller-avatar" id="detailSellerAvatar">
+              <div class="seller-info">
+                <h4 id="detailSellerName">닉네임</h4>
+                <p id="detailSellerLoc">동네 인증 완료</p>
+              </div>
+            </div>
+            <div class="seller-manner-wrap">
+              <span class="manner-temp" id="detailSellerTemp">36.5℃</span>
+              <span class="manner-label">포슬 감자온도</span>
+              <div class="manner-bar">
+                <div class="manner-fill" id="detailSellerBar" style="width: 70%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 상품 설명 -->
+          <div class="detail-desc-wrap">
+            <div class="detail-desc-title">상품 설명</div>
+            <p class="detail-desc" id="detailDescription">상세 설명 내용이 들어갑니다.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 모달 하단 액션 버튼 바 -->
+      <div class="detail-actions-bar">
+        <button type="button" class="btn-like-action" id="btnDetailLike" title="관심 상품 추가">
+          ♡
+        </button>
+        <button type="button" class="btn-chat-action" id="btnDetailChat">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>채팅 시작하기</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       [화면 4] 1:1 감자톡 채팅 화면 (모달)
+       ======================================================================== -->
+  <div class="modal-overlay" id="chatModalOverlay" role="dialog" aria-modal="true" aria-label="1:1 감자톡">
+    <div class="chat-modal-dialog" id="chatModalDialog">
+      <!-- 1. 채팅 헤더 -->
+      <div class="chat-modal-header">
+        <div class="chat-header-user-info">
+          <button type="button" class="btn-chat-header-action" id="btnChatModalBack" title="뒤로가기" aria-label="뒤로가기">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <img src="" alt="판매자 프로필" class="chat-header-avatar" id="chatModalAvatar">
+          <div class="chat-header-meta">
+            <div class="chat-header-nick-row">
+              <span class="chat-header-nick" id="chatModalNick">판매자</span>
+            </div>
+            <div class="chat-header-sub">
+              <span id="chatModalLoc">동네</span>
+              <span>•</span>
+              <span class="chat-header-manner" id="chatModalManner">🥔 36.5℃</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-header-actions">
+          <button type="button" class="btn-chat-header-action" id="btnOpenChatExternal" title="단독 전체화면으로 열기" aria-label="새 탭으로 열기">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </button>
+          <button type="button" class="btn-chat-header-action" id="btnChatModalClose" title="닫기" aria-label="닫기">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. 대화 상품 요약 바 -->
+      <div class="chat-product-summary-bar">
+        <div class="chat-prod-left" id="chatProdSummaryClick" title="상품 상세 팝업 다시보기">
+          <img src="" alt="상품 썸네일" class="chat-prod-thumb" id="chatModalProdImg">
+          <div class="chat-prod-info">
+            <span class="chat-prod-title" id="chatModalProdTitle">상품명</span>
+            <span class="chat-prod-price" id="chatModalProdPrice">0원</span>
+          </div>
+        </div>
+        <div class="chat-prod-actions">
+          <button type="button" class="btn-chat-promise" id="btnModalPromise" title="직거래 약속 잡기">
+            <span>📅</span>
+            <span>약속잡기</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. 실시간 메시지 스크롤 영역 -->
+      <div class="chat-messages-scroll" id="chatModalMessages">
+        <div class="chat-bubble-date">
+          <span id="chatModalDateChip">2026년 10월 20일 화요일</span>
+        </div>
+
+        <div class="chat-safe-banner">
+          <span>🥔</span>
+          <div>
+            <strong>감자 안심 직거래</strong><br>
+            개인정보 유출 및 직거래 외 외부 송금 사기에 주의하세요!
+          </div>
+        </div>
+
+        <div class="chat-bubble-date" style="margin: 2px 0;">
+          <span id="chatModalSystemMsg" style="background: #f1e7dc; color: var(--text-sub);">
+            거래 대화가 시작되었습니다.
+          </span>
+        </div>
+
+        <!-- 동적 메시지 추가 영역 -->
+        <div id="chatModalMsgList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+      </div>
+
+      <!-- 4. 빠른 응답 칩 -->
+      <div class="chat-quick-chips-bar">
+        <button type="button" class="chat-mini-chip" onclick="sendModalQuickMsg('안녕하세요! 아직 구매 가능한가요? 🥔')">아직 구매 가능한가요? 🥔</button>
+        <button type="button" class="chat-mini-chip" onclick="sendModalQuickMsg('혹시 네고 조금 가능한가요? 😊')">네고 가능한가요? 😊</button>
+        <button type="button" class="chat-mini-chip" onclick="sendModalQuickMsg('어디서 직거래 가능하신가요? 📍')">어디서 직거래 가능해요? 📍</button>
+        <button type="button" class="chat-mini-chip" onclick="sendModalQuickMsg('오늘 저녁에 바로 거래할 수 있어요! ✨')">오늘 바로 거래 가능해요! ✨</button>
+      </div>
+
+      <!-- 5. 하단 입력 바 -->
+      <div class="chat-modal-footer">
+        <input type="text" class="chat-input-field" id="chatModalInputField" placeholder="메시지를 입력하세요... (Enter 전송)" autocomplete="off">
+        <button type="button" class="btn-chat-modal-send" id="btnChatModalSend" title="전송" disabled>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       [화면 3] 글쓰기 화면 (모달/폼)
+       ======================================================================== -->
+  <div class="modal-overlay" id="writeModalOverlay">
+    <div class="write-modal-dialog" id="writeDialog">
+      <!-- 헤더 -->
+      <div class="write-header">
+        <h2>
+          <span>🥔</span>
+          <span>내 물건 감자 마켓에 팔기</span>
+        </h2>
+        <button type="button" class="btn-write-close" id="btnWriteClose" aria-label="닫기">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- 글쓰기 입력 폼 -->
+      <form id="writeForm" class="write-body-scroll">
+        <!-- 1. 상품 이미지 -->
+        <div class="form-group">
+          <label class="form-label">상품 대표 이미지</label>
+          <div class="image-input-container">
+            <!-- 클릭 시 파일 선택창이 열리는 미리보기 박스 -->
+            <div class="image-preview-box" id="imagePreviewBox" title="클릭하여 내 기기에서 사진 선택">
+              <div class="image-preview-placeholder" id="imagePlaceholder">
+                <span style="font-size: 1.4rem;">📷</span>
+                <span style="font-size: 0.76rem; font-weight: 600; color: var(--potato-primary);">사진 선택</span>
+              </div>
+              <img src="" id="imagePreviewImg" style="display: none;" alt="미리보기">
+              <button type="button" id="btnRemoveImage" class="btn-remove-img" style="display: none;" title="이미지 삭제">✕</button>
+            </div>
+
+            <!-- 디바이스 파일 선택 숨은 input -->
+            <input type="file" id="inputImageFile" accept="image/*" style="display: none;">
+
+            <div class="image-url-inputs">
+              <!-- 디바이스 파일 선택 버튼 바 -->
+              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <button type="button" id="btnPickFile" class="btn-device-upload">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                  </svg>
+                  <span>내 기기에서 사진 선택</span>
+                </button>
+                <span id="fileNameDisplay" style="font-size: 0.8rem; color: var(--text-muted); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 220px;">선택된 파일 없음</span>
+              </div>
+
+              <!-- 보조: 웹 이미지 URL 직접 입력 -->
+              <div style="margin-top: 4px;">
+                <input type="url" id="inputImageUrl" class="form-input" placeholder="또는 웹 이미지 URL 직접 입력 (선택)" style="font-size: 0.85rem; padding: 0.5rem 0.85rem;">
+              </div>
+
+              <div class="preset-img-chips">
+                <span style="font-size: 0.72rem; color: var(--text-muted); align-self: center;">샘플:</span>
+                <span class="preset-chip" onclick="setPresetImage('https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&auto=format&fit=crop&q=80')">태블릿</span>
+                <span class="preset-chip" onclick="setPresetImage('https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&auto=format&fit=crop&q=80')">가구소파</span>
+                <span class="preset-chip" onclick="setPresetImage('https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&auto=format&fit=crop&q=80')">의류패션</span>
+                <span class="preset-chip" onclick="setPresetImage('https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=600&auto=format&fit=crop&q=80')">햇감자</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. 상품명 -->
+        <div class="form-group">
+          <label class="form-label" for="inputTitle">상품명 <span class="req">*</span></label>
+          <input type="text" id="inputTitle" class="form-input" placeholder="글 제목을 입력해주세요" required maxlength="50">
+        </div>
+
+        <!-- 3. 카테고리 -->
+        <div class="form-group">
+          <label class="form-label" for="selectCategory">카테고리 <span class="req">*</span></label>
+          <select id="selectCategory" class="form-select" required>
+            <option value="" disabled selected>카테고리를 선택해주세요</option>
+            <option value="디지털기기">📱 디지털기기</option>
+            <option value="가구/인테리어">🪑 가구/인테리어</option>
+            <option value="의류">👕 의류</option>
+            <option value="생활가전">🔌 생활가전</option>
+            <option value="도서/티켓">📚 도서/티켓</option>
+            <option value="기타">🎁 기타</option>
+          </select>
+        </div>
+
+        <!-- 4. 가격 -->
+        <div class="form-group">
+          <label class="form-label" for="inputPrice">판매 가격 (원) <span class="req">*</span></label>
+          <input type="number" id="inputPrice" class="form-input" placeholder="₩ 가격을 입력해주세요 (0원 입력 시 나눔)" min="0" step="100" required>
+          <div class="price-helper-row">
+            <span id="priceFormatted" class="price-korean">0원</span>
+            <span>숫자만 입력해 주세요</span>
+          </div>
+        </div>
+
+        <!-- 5. 자세한 설명 -->
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem;">
+            <label class="form-label" for="inputDescription" style="margin-bottom: 0;">자세한 설명 <span class="req">*</span></label>
+            <span style="font-size: 0.82rem; color: var(--text-muted);"><span id="descCount" style="color: var(--potato-primary); font-weight: 700;">0</span> / 500자</span>
+          </div>
+          <textarea id="inputDescription" class="form-textarea" maxlength="500" placeholder="구매 시기, 사용감, 하자 여부 등 상품의 상태를 솔직하게 작성해주세요. (최대 500자까지 작성 가능해요 🥔)" required></textarea>
+        </div>
+
+        <!-- 6. 거래 동네 -->
+        <div class="form-group">
+          <label class="form-label" for="inputLocation">거래 희망 동네 <span class="req">*</span></label>
+          <input type="text" id="inputLocation" class="form-input" placeholder="예: 역삼1동, 강남역 4번 출구 앞" value="역삼동" required>
+        </div>
+
+        <!-- 7. 판매 상태 -->
+        <div class="form-group">
+          <label class="form-label">판매 상태</label>
+          <div class="status-radio-group">
+            <label>
+              <input type="radio" name="writeStatus" value="판매중" class="status-radio-input" checked>
+              <span class="status-radio-label">🟢 판매중</span>
+            </label>
+            <label>
+              <input type="radio" name="writeStatus" value="예약중" class="status-radio-input">
+              <span class="status-radio-label">🟠 예약중</span>
+            </label>
+            <label>
+              <input type="radio" name="writeStatus" value="거래 완료" class="status-radio-input">
+              <span class="status-radio-label">⚪ 거래 완료</span>
+            </label>
+          </div>
+        </div>
+      </form>
+
+      <!-- 푸터 버튼 -->
+      <div class="write-footer">
+        <button type="button" class="btn-form-cancel" id="btnWriteCancel">취소</button>
+        <button type="submit" form="writeForm" class="btn-form-submit" id="btnWriteSubmit">작성 완료 🥔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       [회원가입 & 로그인 모달]
+       ======================================================================== -->
+  <div class="modal-overlay" id="authModalOverlay" role="dialog" aria-modal="true" aria-label="로그인 및 회원가입">
+    <div class="auth-modal-dialog">
+      <!-- 닫기 버튼 -->
+      <button type="button" class="btn-write-close" id="btnAuthClose" style="position: absolute; top: 14px; right: 14px; z-index: 10;" title="닫기" aria-label="닫기">✕</button>
+
+      <!-- 헤더 -->
+      <div class="auth-header">
+        <div class="auth-logo-badge">🥔</div>
+        <h2 class="auth-title" id="authModalTitle">감자 마켓 로그인</h2>
+        <p class="auth-subtitle" id="authModalSubtitle">따뜻하고 포근한 동네 중고거래의 시작</p>
+        
+        <!-- 글쓰기 등에서 진입 시 띄워줄 안내 알림 -->
+        <div class="auth-notice-box" id="authNoticeBox">
+          <span>📢</span>
+          <span id="authNoticeText">글을 작성하려면 먼저 로그인해 주세요!</span>
+        </div>
+      </div>
+
+      <!-- 탭 선택기 -->
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab-btn active" id="tabBtnLogin">로그인</button>
+        <button type="button" class="auth-tab-btn" id="tabBtnSignUp">회원가입</button>
+      </div>
+
+      <!-- 본문 -->
+      <div class="auth-body">
+        <!-- 1. 로그인 폼 -->
+        <form id="authLoginForm">
+          <div class="auth-input-group">
+            <label class="auth-label" for="loginEmail">이메일 <span class="req">*</span></label>
+            <input type="email" id="loginEmail" class="auth-input" placeholder="example@email.com" required autocomplete="email">
+          </div>
+          <div class="auth-input-group">
+            <label class="auth-label" for="loginPassword">비밀번호 <span class="req">*</span></label>
+            <input type="password" id="loginPassword" class="auth-input" placeholder="비밀번호 입력" required autocomplete="current-password">
+          </div>
+          <button type="submit" class="auth-btn-submit" id="btnLoginSubmit">로그인 🥔</button>
+          <div class="auth-switch-link">
+            아직 계정이 없으신가요? <a id="linkGoSignUp">회원가입하기</a>
+          </div>
+        </form>
+
+        <!-- 2. 회원가입 폼 (기본 숨김) -->
+        <form id="authSignUpForm" style="display: none;">
+          <div class="auth-input-group">
+            <label class="auth-label" for="signupNickname">닉네임 <span class="req">*</span></label>
+            <input type="text" id="signupNickname" class="auth-input" placeholder="동네 이웃에게 보여질 닉네임 (예: 포슬포슬감자)" required maxlength="20" autocomplete="nickname">
+          </div>
+          <div class="auth-input-group">
+            <label class="auth-label" for="signupEmail">이메일 <span class="req">*</span></label>
+            <input type="email" id="signupEmail" class="auth-input" placeholder="example@email.com" required autocomplete="email">
+          </div>
+          <div class="auth-input-group">
+            <label class="auth-label" for="signupPassword">비밀번호 <span class="req">*</span></label>
+            <input type="password" id="signupPassword" class="auth-input" placeholder="비밀번호 6자 이상" minlength="6" required autocomplete="new-password">
+          </div>
+          <button type="submit" class="auth-btn-submit" id="btnSignUpSubmit">회원가입 완료 🥔</button>
+          <div class="auth-switch-link">
+            이미 계정이 있으신가요? <a id="linkGoLogin">로그인하기</a>
+          </div>
+        </form>
+
+        <!-- 피드백 메시지 박스 -->
+        <div class="auth-message-box" id="authMessageBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 토스트 안내 피드백 -->
+  <div id="potatoToast" class="potato-toast" role="status" aria-live="polite">
+    <span class="toast-emoji">🥔</span>
+    <span id="toastText">알림 내용</span>
+  </div>
+
+  <!-- ========================================================================
+       [통합 스크립트 로직] Supabase 실시간 연동, 데이터 관리, 모달 제어, 필터링
+       ======================================================================== -->
+  <script>
+    /* --------------------------------------------------------------------------
+       [Supabase 클라이언트 초기화]
+       -------------------------------------------------------------------------- */
+    const SUPABASE_URL = "https://shhlmhtswfbrjrfomzbv.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoaGxtaHRzd2ZicmpyZm9temJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0MDUzMTUsImV4cCI6MjEwNzk4MTMxNX0.VqrgbNhbnDBRRvUo2WqDJJk2bbwR9SW5VJz9N9GWvFw";
+    
+    // Supabase JS 인스턴스
+    const sbClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+    // 현재 사용자 인증 상태 (Supabase Auth 기반)
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    let currentUserId = null;       // 로그인 시 auth.users.id 로 설정
+    let currentUserNickname = null; // 프로필 닉네임
+    let isLoggedIn = false;         // 인증 여부 플래그
+    let pendingWriteAfterLogin = false; // 글쓰기 클릭 → 로그인 후 글쓰기 모달 열기 플래그
+
+    const DEFAULT_POTATO_IMG = "https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=600&q=80";
+
+    // 인메모리 상품 목록 (Supabase에서 실시간 동기화)
+    let products = [];
+
+    // 전역 필터 상태
+    let currentFilter = {
+      category: "ALL",
+      onlyAvailable: false,
+      keyword: ""
+    };
+
+    let activeDetailProductId = null;
+
+    /* --------------------------------------------------------------------------
+       [공통 유틸리티]
+       -------------------------------------------------------------------------- */
+    function escapeHtml(string) {
+      if (!string) return '';
+      return String(string)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function formatPrice(price) {
+      if (!price || price === 0) return "나눔 🧡";
+      return Number(price).toLocaleString('ko-KR') + "원";
+    }
+
+    function getStatusClass(status) {
+      if (status === "판매중") return "selling";
+      if (status === "예약중") return "reserved";
+      if (status === "거래 완료") return "completed";
+      return "selling";
+    }
+
+    function calculateTimeAgo(dateString) {
+      if (!dateString) return "방금 전";
+      const now = new Date();
+      const past = new Date(dateString);
+      const diffMs = now - past;
+      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+      const diffHours = Math.floor(diffMinutes / 60);
+      const diffDays = Math.floor(diffHours / 24);
+
+      if (diffMinutes < 1) return "방금 전";
+      if (diffMinutes < 60) return `${diffMinutes}분 전`;
+      if (diffHours < 24) return `${diffHours}시간 전`;
+      if (diffDays < 30) return `${diffDays}일 전`;
+      return past.toLocaleDateString('ko-KR');
+    }
+
+    let toastTimer = null;
+    function showToast(text, emoji = "🥔") {
+      const toastEl = document.getElementById("potatoToast");
+      const textEl = document.getElementById("toastText");
+      const emojiEl = toastEl.querySelector(".toast-emoji");
+      if (!toastEl) return;
+
+      textEl.textContent = text;
+      emojiEl.textContent = emoji;
+      toastEl.classList.add("show");
+
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toastEl.classList.remove("show");
+      }, 2400);
+    }
+
+    /* --------------------------------------------------------------------------
+       [인증(Auth) 관련 함수들]
+       -------------------------------------------------------------------------- */
+
+    // 헤더 UI를 로그인 상태에 따라 전환
+    function updateHeaderAuthUI() {
+      const btnLogin = document.getElementById("btnOpenLogin");
+      const userWrap = document.getElementById("headerUserWrap");
+      const nickEl = document.getElementById("headerUserNickname");
+
+      if (isLoggedIn && currentUserNickname) {
+        // 로그인 상태: [로그인] 숨김, [닉네임]+[로그아웃] 표시
+        if (btnLogin) btnLogin.style.display = "none";
+        if (userWrap) userWrap.style.display = "inline-flex";
+        if (nickEl) nickEl.textContent = currentUserNickname;
+      } else {
+        // 비로그인 상태: [로그인] 표시, 닉네임/로그아웃 숨김
+        if (btnLogin) btnLogin.style.display = "inline-flex";
+        if (userWrap) userWrap.style.display = "none";
+      }
+    }
+
+    // 로그인/회원가입 모달 열기 (mode: 'login' | 'signup')
+    function openAuthModal(mode, noticeText) {
+      const overlay = document.getElementById("authModalOverlay");
+      const loginForm = document.getElementById("authLoginForm");
+      const signUpForm = document.getElementById("authSignUpForm");
+      const tabLogin = document.getElementById("tabBtnLogin");
+      const tabSignUp = document.getElementById("tabBtnSignUp");
+      const noticeBox = document.getElementById("authNoticeBox");
+      const msgBox = document.getElementById("authMessageBox");
+
+      // 폼 리셋
+      loginForm.reset();
+      signUpForm.reset();
+      msgBox.className = "auth-message-box";
+      msgBox.textContent = "";
+      msgBox.style.display = "none";
+
+      // 안내 박스
+      if (noticeText) {
+        document.getElementById("authNoticeText").textContent = noticeText;
+        noticeBox.style.display = "flex";
+      } else {
+        noticeBox.style.display = "none";
+      }
+
+      // 탭 전환
+      if (mode === "signup") {
+        tabLogin.classList.remove("active");
+        tabSignUp.classList.add("active");
+        loginForm.style.display = "none";
+        signUpForm.style.display = "block";
+      } else {
+        tabLogin.classList.add("active");
+        tabSignUp.classList.remove("active");
+        loginForm.style.display = "block";
+        signUpForm.style.display = "none";
+      }
+
+      overlay.classList.add("active");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeAuthModal() {
+      const overlay = document.getElementById("authModalOverlay");
+      overlay.classList.remove("active");
+      document.body.style.overflow = "";
+    }
+
+    // 프로필 닉네임 조회
+    async function fetchUserNickname(userId) {
+      if (!sbClient || !userId) return null;
+      try {
+        const { data } = await sbClient
+          .from("profiles")
+          .select("nickname")
+          .eq("id", userId)
+          .maybeSingle();
+        return data?.nickname || null;
+      } catch (e) {
+        console.warn("닉네임 조회 실패:", e);
+        return null;
+      }
+    }
+
+    // 세션에서 사용자 정보 동기화
+    async function syncAuthSession() {
+      if (!sbClient) return;
+      try {
+        const { data: { session } } = await sbClient.auth.getSession();
+        if (session && session.user) {
+          currentUserId = session.user.id;
+          isLoggedIn = true;
+          // 메타데이터에서 닉네임 우선, 없으면 profiles에서 조회
+          currentUserNickname = session.user.user_metadata?.nickname || null;
+          if (!currentUserNickname) {
+            currentUserNickname = await fetchUserNickname(currentUserId);
+          }
+          if (!currentUserNickname) {
+            currentUserNickname = session.user.email?.split("@")[0] || "감자이웃";
+          }
+        } else {
+          currentUserId = null;
+          currentUserNickname = null;
+          isLoggedIn = false;
+        }
+      } catch (e) {
+        console.warn("세션 동기화 오류:", e);
+        currentUserId = null;
+        currentUserNickname = null;
+        isLoggedIn = false;
+      }
+      updateHeaderAuthUI();
+    }
+
+    // 이메일/비밀번호 로그인
+    async function handleLogin(email, password) {
+      if (!sbClient) return;
+      const msgBox = document.getElementById("authMessageBox");
+      const btnSubmit = document.getElementById("btnLoginSubmit");
+
+      try {
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = "로그인 중... 🥔";
+
+        const { data, error } = await sbClient.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+        if (error) throw error;
+
+        // 세션 동기화
+        await syncAuthSession();
+
+        // 모달 닫기
+        closeAuthModal();
+        showToast(`${currentUserNickname}님 환영합니다! 🥔🎉`);
+
+        // 글쓰기 대기 상태였으면 바로 글쓰기 모달 열기
+        if (pendingWriteAfterLogin) {
+          pendingWriteAfterLogin = false;
+          setTimeout(() => openWriteModal(), 350);
+        }
+      } catch (err) {
+        console.error("로그인 오류:", err);
+        msgBox.className = "auth-message-box error";
+        msgBox.textContent = err.message === "Invalid login credentials"
+          ? "이메일 또는 비밀번호가 올바르지 않습니다."
+          : (err.message || "로그인에 실패했습니다. 다시 시도해주세요.");
+        msgBox.style.display = "block";
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = "로그인 🥔";
+      }
+    }
+
+    // 이메일/비밀번호/닉네임 회원가입
+    async function handleSignUp(email, password, nickname) {
+      if (!sbClient) return;
+      const msgBox = document.getElementById("authMessageBox");
+      const btnSubmit = document.getElementById("btnSignUpSubmit");
+
+      if (!nickname || nickname.trim().length < 1) {
+        msgBox.className = "auth-message-box error";
+        msgBox.textContent = "닉네임을 입력해주세요.";
+        msgBox.style.display = "block";
+        return;
+      }
+
+      try {
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = "가입 처리 중... 🥔";
+
+        const { data, error } = await sbClient.auth.signUp({
+          email: email,
+          password: password,
+          options: {
+            data: {
+              nickname: nickname.trim()
+            }
+          }
+        });
+
+        if (error) throw error;
+
+        // 자동 확인 트리거가 있으므로 바로 로그인 시도
+        if (data.user && data.session) {
+          await syncAuthSession();
+          closeAuthModal();
+          showToast(`${currentUserNickname}님 가입 및 로그인 완료! 🥔🎉`);
+
+          if (pendingWriteAfterLogin) {
+            pendingWriteAfterLogin = false;
+            setTimeout(() => openWriteModal(), 350);
+          }
+        } else {
+          // 세션이 즉시 안 오는 경우 → 로그인으로 전환 유도
+          msgBox.className = "auth-message-box success";
+          msgBox.textContent = "회원가입이 완료되었습니다! 로그인해주세요.";
+          msgBox.style.display = "block";
+
+          // 로그인 탭으로 자동 전환
+          setTimeout(() => {
+            document.getElementById("tabBtnLogin").click();
+            document.getElementById("loginEmail").value = email;
+          }, 1200);
+        }
+      } catch (err) {
+        console.error("회원가입 오류:", err);
+        let errMsg = err.message || "회원가입에 실패했습니다.";
+        if (errMsg.includes("already registered")) {
+          errMsg = "이미 등록된 이메일입니다. 로그인을 시도해주세요.";
+        }
+        msgBox.className = "auth-message-box error";
+        msgBox.textContent = errMsg;
+        msgBox.style.display = "block";
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = "회원가입 완료 🥔";
+      }
+    }
+
+    // 로그아웃
+    async function handleLogout() {
+      if (!sbClient) return;
+      try {
+        await sbClient.auth.signOut();
+        currentUserId = null;
+        currentUserNickname = null;
+        isLoggedIn = false;
+        pendingWriteAfterLogin = false;
+        updateHeaderAuthUI();
+        showToast("로그아웃 되었습니다. 다음에 또 만나요! 🥔👋");
+      } catch (e) {
+        console.error("로그아웃 실패:", e);
+        showToast("로그아웃에 실패했습니다.", "⚠️");
+      }
+    }
+
+    /* --------------------------------------------------------------------------
+       [Supabase 데이터 로드]
+       -------------------------------------------------------------------------- */
+    async function loadProductsFromSupabase() {
+      const statusBadgeText = document.getElementById("supabaseStatusText");
+      if (!sbClient) {
+        if (statusBadgeText) statusBadgeText.textContent = "Supabase SDK 미로드";
+        console.warn("Supabase 클라이언트가 초기화되지 않았습니다.");
+        return;
+      }
+
+      try {
+        if (statusBadgeText) statusBadgeText.textContent = "Supabase 동기화 중...";
+        
+        const { data, error } = await sbClient
+          .from("products")
+          .select(`
+            id,
+            title,
+            category,
+            price,
+            status,
+            trade_location,
+            description,
+            image_url,
+            created_at,
+            seller:profiles (
+              id,
+              nickname,
+              avatar_url,
+              manner_temperature,
+              primary_location,
+              is_location_verified
+            )
+          `)
+          .order("id", { ascending: false });
+
+        if (error) throw error;
+
+        products = (data || []).map(p => ({
+          id: p.id,
+          title: p.title,
+          category: p.category,
+          price: p.price,
+          status: p.status,
+          location: p.trade_location,
+          timeAgo: calculateTimeAgo(p.created_at),
+          imageUrl: p.image_url || DEFAULT_POTATO_IMG,
+          description: p.description,
+          sellerId: p.seller?.id,
+          seller: {
+            nickname: p.seller?.nickname || "감자이웃",
+            avatar: p.seller?.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80",
+            location: p.seller?.primary_location || p.trade_location,
+            mannerTemp: (p.seller?.manner_temperature || 36.5) + "℃"
+          }
+        }));
+
+        if (statusBadgeText) {
+          statusBadgeText.textContent = `Supabase 연결됨 (${products.length}개 매물)`;
+        }
+
+        renderProducts();
+      } catch (err) {
+        console.error("Supabase 데이터 로드 오류:", err);
+        if (statusBadgeText) statusBadgeText.textContent = "Supabase 로드 오류";
+        showToast("데이터를 불러오는 중 오류가 발생했습니다.", "⚠️");
+      }
+    }
+
+    /* --------------------------------------------------------------------------
+       [화면 1: 상품 목록 렌더링 및 필터링]
+       -------------------------------------------------------------------------- */
+    function renderProducts() {
+      const grid = document.getElementById("productGrid");
+      const countEl = document.getElementById("totalProductCount");
+      const emptyState = document.getElementById("emptyState");
+
+      // 필터링 적용
+      const filtered = products.filter(p => {
+        if (currentFilter.category !== "ALL" && p.category !== currentFilter.category) {
+          return false;
+        }
+        if (currentFilter.onlyAvailable && p.status !== "판매중") {
+          return false;
+        }
+        if (currentFilter.keyword.trim() !== "") {
+          const kw = currentFilter.keyword.toLowerCase().trim();
+          const matchTitle = (p.title || "").toLowerCase().includes(kw);
+          const matchLoc = (p.location || "").toLowerCase().includes(kw);
+          const matchCat = (p.category || "").toLowerCase().includes(kw);
+          const matchDesc = (p.description || "").toLowerCase().includes(kw);
+          if (!matchTitle && !matchLoc && !matchCat && !matchDesc) {
+            return false;
+          }
+        }
+        return true;
+      });
+
+      countEl.textContent = filtered.length;
+      grid.innerHTML = "";
+
+      if (filtered.length === 0) {
+        emptyState.style.display = "block";
+      } else {
+        emptyState.style.display = "none";
+        filtered.forEach(p => {
+          const statusClass = getStatusClass(p.status);
+          const isCompleted = p.status === "거래 완료" ? "completed" : "";
+          const isFree = (!p.price || p.price === 0) ? "free" : "";
+
+          const card = document.createElement("article");
+          card.className = `product-card ${isCompleted}`;
+          card.onclick = () => openDetailModal(p.id);
+
+          card.innerHTML = `
+            <div class="card-thumb-wrap">
+              <img class="card-thumb" src="${p.imageUrl || DEFAULT_POTATO_IMG}" alt="${p.title}" onerror="this.src='${DEFAULT_POTATO_IMG}'">
+              <span class="badge-status ${statusClass} card-thumb-badge">${p.status}</span>
+            </div>
+            <div class="card-body">
+              <div>
+                <h3 class="card-title">${p.title}</h3>
+                <div class="card-meta">
+                  <span class="card-author">🥔 ${escapeHtml(p.seller?.nickname || '감자이웃')}</span>
+                  <span class="card-meta-dot"></span>
+                  <span>${p.location}</span>
+                  <span class="card-meta-dot"></span>
+                  <span>${p.timeAgo}</span>
+                </div>
+              </div>
+              <div class="card-footer">
+                <span class="card-price ${isFree}">${formatPrice(p.price)}</span>
+                <span class="card-category-tag">${p.category}</span>
+              </div>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+      }
+    }
+
+    /* --------------------------------------------------------------------------
+       [화면 2: 상세 팝업 모달 제어 및 찜(Like) 연동]
+       -------------------------------------------------------------------------- */
+    async function openDetailModal(productId) {
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+
+      activeDetailProductId = productId;
+
+      document.getElementById("detailImage").src = product.imageUrl || DEFAULT_POTATO_IMG;
+      
+      const badge = document.getElementById("detailStatusBadge");
+      badge.textContent = product.status;
+      badge.className = `badge-status ${getStatusClass(product.status)}`;
+
+      document.getElementById("detailCategory").textContent = product.category;
+      document.getElementById("detailTitle").textContent = product.title;
+      document.getElementById("detailMetaAuthor").textContent = `🥔 ${product.seller?.nickname || '감자이웃'}`;
+      document.getElementById("detailLocation").textContent = product.location;
+      document.getElementById("detailTimeAgo").textContent = product.timeAgo;
+      document.getElementById("detailPrice").textContent = formatPrice(product.price);
+      document.getElementById("detailDescription").textContent = product.description;
+
+      const priceBadge = document.getElementById("detailPriceBadge");
+      if (!product.price || product.price === 0) {
+        priceBadge.textContent = "나눔 상품 🧡";
+      } else {
+        priceBadge.textContent = "가격 제안 불가";
+      }
+
+      const seller = product.seller || {
+        nickname: "감자이웃",
+        avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80",
+        location: product.location,
+        mannerTemp: "36.5℃"
+      };
+
+      document.getElementById("detailSellerAvatar").src = seller.avatar;
+      document.getElementById("detailSellerName").textContent = seller.nickname;
+      document.getElementById("detailSellerLoc").textContent = `${seller.location} · 동네인증 완료`;
+      document.getElementById("detailSellerTemp").textContent = seller.mannerTemp;
+
+      const numTemp = parseFloat(seller.mannerTemp) || 36.5;
+      const percent = Math.min(Math.max((numTemp / 60) * 100, 20), 100);
+      document.getElementById("detailSellerBar").style.width = `${percent}%`;
+
+      // Supabase 찜(Like) 상태 확인
+      const likeBtn = document.getElementById("btnDetailLike");
+      likeBtn.classList.remove("liked");
+      likeBtn.textContent = "♡";
+
+      if (sbClient) {
+        try {
+          const { data } = await sbClient
+            .from("product_likes")
+            .select("id")
+            .eq("user_id", currentUserId)
+            .eq("product_id", productId)
+            .maybeSingle();
+
+          if (data) {
+            likeBtn.classList.add("liked");
+            likeBtn.textContent = "♥";
+          }
+        } catch (e) {
+          console.warn("찜 상태 확인 실패:", e);
+        }
+      }
+
+      const modal = document.getElementById("detailModalOverlay");
+      modal.classList.add("active");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeDetailModal() {
+      const modal = document.getElementById("detailModalOverlay");
+      modal.classList.remove("active");
+      document.body.style.overflow = "";
+      activeDetailProductId = null;
+    }
+
+    // 찜 토글 비동기 처리
+    async function toggleProductLike() {
+      if (!activeDetailProductId || !sbClient) return;
+      if (!isLoggedIn) {
+        openAuthModal("login", "관심 상품을 등록하려면 먼저 로그인해 주세요!");
+        return;
+      }
+      const likeBtn = document.getElementById("btnDetailLike");
+      const isLiked = likeBtn.classList.contains("liked");
+
+      try {
+        if (isLiked) {
+          // 찜 해제
+          await sbClient
+            .from("product_likes")
+            .delete()
+            .eq("user_id", currentUserId)
+            .eq("product_id", activeDetailProductId);
+
+          likeBtn.classList.remove("liked");
+          likeBtn.textContent = "♡";
+          showToast("관심 상품에서 해제했습니다.");
+        } else {
+          // 찜 등록
+          await sbClient
+            .from("product_likes")
+            .insert({
+              user_id: currentUserId,
+              product_id: activeDetailProductId
+            });
+
+          likeBtn.classList.add("liked");
+          likeBtn.textContent = "♥";
+          showToast("관심 감자 목록에 담았어요! 🧡");
+        }
+      } catch (err) {
+        console.error("찜 토글 실패:", err);
+        showToast("처리 중 오류가 발생했습니다.", "⚠️");
+      }
+    }
+
+    /* --------------------------------------------------------------------------
+       [화면 4: 1:1 감자톡 채팅 모달 제어 및 메시지 송수신]
+       -------------------------------------------------------------------------- */
+    let activeChatRoomId = null;
+    let activeChatProduct = null;
+    let activeChatSeller = null;
+    let chatRealtimeChannel = null;
+
+    // 채팅방 개설/연결 비동기 처리 및 모달 오픈
+    async function startChatWithSeller() {
+      if (!activeDetailProductId) return;
+      if (!isLoggedIn) {
+        openAuthModal("login", "채팅을 시작하려면 먼저 로그인해 주세요!");
+        return;
+      }
+      const product = products.find(p => p.id === activeDetailProductId);
+      if (!product) return;
+
+      const sellerId = product.sellerId || "11111111-1111-1111-1111-111111111111";
+
+      if (sellerId === currentUserId) {
+        showToast("내가 등록한 상품입니다! 🥔", "😊");
+        return;
+      }
+
+      let roomId = null;
+
+      if (sbClient) {
+        try {
+          // 이미 개설된 방이 있는지 확인
+          const { data: existingRoom } = await sbClient
+            .from("chat_rooms")
+            .select("id")
+            .eq("product_id", activeDetailProductId)
+            .eq("buyer_id", currentUserId)
+            .maybeSingle();
+
+          if (existingRoom) {
+            roomId = existingRoom.id;
+          } else {
+            // 새 채팅방 개설
+            const { data: newRoom, error } = await sbClient
+              .from("chat_rooms")
+              .insert({
+                product_id: activeDetailProductId,
+                buyer_id: currentUserId,
+                seller_id: sellerId,
+                last_message: "대화가 시작되었습니다.",
+                status: "ACTIVE"
+              })
+              .select("id")
+              .single();
+
+            if (!error && newRoom) {
+              roomId = newRoom.id;
+              // 시작 시스템 메시지 추가
+              await sbClient.from("chat_messages").insert({
+                room_id: roomId,
+                sender_id: currentUserId,
+                message_type: "SYSTEM",
+                content: `'${product.title}'에 대한 거래 대화가 시작되었습니다.`
+              });
+            }
+          }
+        } catch (err) {
+          console.error("채팅방 개설 오류:", err);
+        }
+      }
+
+      // 모달 화면으로 연결!
+      openChatModal(product, roomId);
+    }
+
+    // 채팅 모달 열기
+    async function openChatModal(product, roomId) {
+      activeChatProduct = product;
+      activeChatRoomId = roomId;
+      activeChatSeller = product.seller || {
+        nickname: "포슬포슬상점",
+        primary_location: "동네 인증",
+        manner_temperature: 38.5,
+        avatar_url: ""
+      };
+
+      // 1. 헤더 정보 바인딩
+      document.getElementById("chatModalNick").textContent = activeChatSeller.nickname || "판매자";
+      document.getElementById("chatModalLoc").textContent = activeChatSeller.primary_location || "동네";
+      document.getElementById("chatModalManner").textContent = `🥔 ${(activeChatSeller.manner_temperature || "36.5")}℃`;
+      const avatarEl = document.getElementById("chatModalAvatar");
+      avatarEl.src = activeChatSeller.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(activeChatSeller.nickname || 'seller')}`;
+
+      // 2. 단독 새 창 열기 버튼 링크 설정
+      const btnExt = document.getElementById("btnOpenChatExternal");
+      btnExt.onclick = () => {
+        window.open(`screen4_chat.html?productId=${product.id}${roomId ? `&roomId=${roomId}` : ''}`, '_blank');
+      };
+
+      // 3. 상품 요약 바 정보 바인딩
+      document.getElementById("chatModalProdTitle").textContent = product.title;
+      document.getElementById("chatModalProdPrice").textContent = formatPrice(product.price);
+      document.getElementById("chatModalProdImg").src = product.image_url || DEFAULT_POTATO_IMG;
+      document.getElementById("chatModalSystemMsg").textContent = `'${product.title}'에 대한 거래 대화가 시작되었습니다.`;
+
+      // 4. 메시지 목록 초기화 및 로드
+      const msgList = document.getElementById("chatModalMsgList");
+      msgList.innerHTML = "";
+
+      // 기본 환영 메시지
+      appendModalMessageUI("other", `안녕하세요! '${product.title}' 매물 보고 문의주셨군요 🥔\n편하게 말씀해 주세요!`);
+
+      // Supabase에서 이전 대화 로드
+      if (sbClient && roomId) {
+        try {
+          const { data: messages } = await sbClient
+            .from("chat_messages")
+            .select("*")
+            .eq("room_id", roomId)
+            .order("created_at", { ascending: true });
+
+          if (messages && messages.length > 0) {
+            msgList.innerHTML = "";
+            messages.forEach(msg => {
+              if (msg.message_type === "SYSTEM") return;
+              appendModalMessageUI(
+                msg.sender_id === currentUserId ? "mine" : "other",
+                msg.content,
+                msg.created_at
+              );
+            });
+          }
+
+          // Realtime 구독
+          subscribeModalChatRoom(roomId);
+        } catch (err) {
+          console.warn("메시지 로드 오류:", err);
+        }
+      }
+
+      // 5. 상세 모달은 닫고, 채팅 모달 활성화
+      const detailOverlay = document.getElementById("detailModalOverlay");
+      detailOverlay.classList.remove("active");
+
+      const chatOverlay = document.getElementById("chatModalOverlay");
+      chatOverlay.classList.add("active");
+      document.body.style.overflow = "hidden";
+
+      // 입력창 포커스
+      setTimeout(() => {
+        const input = document.getElementById("chatModalInputField");
+        if (input) input.focus();
+        scrollChatModalToBottom();
+      }, 150);
+    }
+
+    // 채팅 모달 닫기
+    function closeChatModal(returnToDetail = false) {
+      const chatOverlay = document.getElementById("chatModalOverlay");
+      chatOverlay.classList.remove("active");
+      
+      if (chatRealtimeChannel && sbClient) {
+        sbClient.removeChannel(chatRealtimeChannel);
+        chatRealtimeChannel = null;
+      }
+
+      if (returnToDetail && activeChatProduct) {
+        const detailOverlay = document.getElementById("detailModalOverlay");
+        detailOverlay.classList.add("active");
+      } else {
+        document.body.style.overflow = "";
+      }
+    }
+
+    // 채팅 메시지 전송
+    async function sendModalChatMessage(text) {
+      if (!text || !text.trim()) return;
+      const content = text.trim();
+
+      const input = document.getElementById("chatModalInputField");
+      input.value = "";
+      document.getElementById("btnChatModalSend").disabled = true;
+
+      // 1. 화면에 내 메시지 즉시 렌더링
+      appendModalMessageUI("mine", content);
+
+      // 2. Supabase 저장
+      if (sbClient && activeChatRoomId) {
+        try {
+          await sbClient.from("chat_messages").insert({
+            room_id: activeChatRoomId,
+            sender_id: currentUserId,
+            message_type: "TALK",
+            content: content,
+            is_read: false
+          });
+
+          await sbClient.from("chat_rooms").update({
+            last_message: content,
+            last_message_at: new Date().toISOString()
+          }).eq("id", activeChatRoomId);
+        } catch (err) {
+          console.error("채팅 전송 에러:", err);
+        }
+      }
+
+      // 3. 상대방(감자봇) 자동 응답 시뮬레이션
+      simulateModalSellerResponse(content);
+    }
+
+    function sendModalQuickMsg(text) {
+      sendModalChatMessage(text);
+    }
+
+    // 판매자 자동 응답 시뮬레이션
+    function simulateModalSellerResponse(userMsg) {
+      setTimeout(() => {
+        let reply = "네, 확인했습니다! 직거래 장소나 시간 조율 가능해요 🥔";
+        if (userMsg.includes("구매 가능한가요")) {
+          reply = "네! 아직 구매 가능하십니다. 상태 깨끗하게 보관 중입니다 😊";
+        } else if (userMsg.includes("네고")) {
+          reply = "많이는 어렵지만 직거래 오시면 5,000원 정도는 빼드릴게요! 🥔";
+        } else if (userMsg.includes("어디서") || userMsg.includes("직거래")) {
+          reply = "인근 지하철역이나 주민센터 앞에서 뵐 수 있습니다. 언제가 편하신가요?";
+        } else if (userMsg.includes("오늘")) {
+          reply = "네! 오늘 저녁 8시경에 시간 괜찮습니다. 그때 뵐까요?";
+        }
+
+        appendModalMessageUI("other", reply);
+
+        if (sbClient && activeChatRoomId && activeChatProduct?.seller_id) {
+          sbClient.from("chat_messages").insert({
+            room_id: activeChatRoomId,
+            sender_id: activeChatProduct.seller_id,
+            message_type: "TALK",
+            content: reply,
+            is_read: true
+          }).then(() => {});
+        }
+      }, 1000);
+    }
+
+    // 모달 메시지 UI 추가
+    function appendModalMessageUI(type, text, timeStr) {
+      const msgList = document.getElementById("chatModalMsgList");
+      if (!msgList) return;
+
+      const isMine = type === "mine";
+      const row = document.createElement("div");
+      row.className = `chat-msg-row ${isMine ? "mine" : "other"}`;
+
+      const formattedTime = formatChatTime(timeStr);
+
+      if (isMine) {
+        row.innerHTML = `
+          <div class="chat-msg-box-wrap">
+            <div class="chat-msg-mine-box">${escapeHtml(text).replace(/\n/g, '<br>')}</div>
+            <span class="chat-msg-time">${formattedTime}</span>
+          </div>
+        `;
+      } else {
+        const avatarSrc = activeChatSeller?.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(activeChatSeller?.nickname || 'seller')}`;
+        row.innerHTML = `
+          <img src="${avatarSrc}" alt="판매자" class="chat-msg-avatar">
+          <div class="chat-msg-col">
+            <span class="chat-msg-name">${activeChatSeller?.nickname || "판매자"}</span>
+            <div class="chat-msg-box-wrap">
+              <div class="chat-msg-other-box">${escapeHtml(text).replace(/\n/g, '<br>')}</div>
+              <span class="chat-msg-time">${formattedTime}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      msgList.appendChild(row);
+      scrollChatModalToBottom();
+    }
+
+    function scrollChatModalToBottom() {
+      const scrollArea = document.getElementById("chatModalMessages");
+      if (scrollArea) {
+        requestAnimationFrame(() => {
+          scrollArea.scrollTop = scrollArea.scrollHeight;
+        });
+      }
+    }
+
+    function formatChatTime(dateStr) {
+      const d = dateStr ? new Date(dateStr) : new Date();
+      let hours = d.getHours();
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const ampm = hours >= 12 ? '오후' : '오전';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      return `${ampm} ${hours}:${minutes}`;
+    }
+
+    function subscribeModalChatRoom(roomId) {
+      if (!sbClient) return;
+      if (chatRealtimeChannel) {
+        sbClient.removeChannel(chatRealtimeChannel);
+      }
+      chatRealtimeChannel = sbClient
+        .channel(`modal_room:${roomId}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `room_id=eq.${roomId}`
+        }, payload => {
+          const newMsg = payload.new;
+          if (newMsg.sender_id !== currentUserId) {
+            appendModalMessageUI("other", newMsg.content, newMsg.created_at);
+          }
+        })
+        .subscribe();
+    }
+
+    /* --------------------------------------------------------------------------
+       [화면 3: 글쓰기 모달 제어 및 Supabase 상품 등록]
+       -------------------------------------------------------------------------- */
+    let selectedDeviceFile = null; // 사용자가 내 기기에서 선택한 파일 객체
+
+    function resetImageSelection() {
+      selectedDeviceFile = null;
+      const fileInput = document.getElementById("inputImageFile");
+      if (fileInput) fileInput.value = "";
+      
+      const fileNameEl = document.getElementById("fileNameDisplay");
+      if (fileNameEl) fileNameEl.textContent = "선택된 파일 없음";
+      
+      const removeBtn = document.getElementById("btnRemoveImage");
+      if (removeBtn) removeBtn.style.display = "none";
+
+      const previewImg = document.getElementById("imagePreviewImg");
+      const placeholder = document.getElementById("imagePlaceholder");
+      if (previewImg) {
+        previewImg.src = "";
+        previewImg.style.display = "none";
+      }
+      if (placeholder) {
+        placeholder.style.display = "flex";
+      }
+    }
+
+    function openWriteModal() {
+      document.getElementById("writeForm").reset();
+      document.getElementById("inputLocation").value = "역삼동";
+      resetImageSelection();
+      document.getElementById("priceFormatted").textContent = "0원";
+      document.getElementById("descCount").textContent = "0";
+      document.getElementById("descCount").style.color = "var(--potato-primary)";
+
+      const modal = document.getElementById("writeModalOverlay");
+      modal.classList.add("active");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeWriteModal() {
+      const modal = document.getElementById("writeModalOverlay");
+      modal.classList.remove("active");
+      document.body.style.overflow = "";
+      resetImageSelection();
+    }
+
+    function setPresetImage(url) {
+      resetImageSelection();
+      const input = document.getElementById("inputImageUrl");
+      const previewImg = document.getElementById("imagePreviewImg");
+      const placeholder = document.getElementById("imagePlaceholder");
+      const removeBtn = document.getElementById("btnRemoveImage");
+
+      input.value = url;
+      if (url.trim()) {
+        previewImg.src = url;
+        previewImg.style.display = "block";
+        placeholder.style.display = "none";
+        if (removeBtn) removeBtn.style.display = "flex";
+      } else {
+        previewImg.src = "";
+        previewImg.style.display = "none";
+        placeholder.style.display = "flex";
+      }
+    }
+
+    /* --------------------------------------------------------------------------
+       [이벤트 리스너 및 초기화]
+       -------------------------------------------------------------------------- */
+    document.addEventListener("DOMContentLoaded", () => {
+      // 1. 카테고리 칩 필터링
+      const chips = document.querySelectorAll(".category-chip");
+      chips.forEach(chip => {
+        chip.addEventListener("click", () => {
+          chips.forEach(c => c.classList.remove("active"));
+          chip.classList.add("active");
+          currentFilter.category = chip.dataset.category;
+          renderProducts();
+        });
+      });
+
+      // 2. 거래 가능만 보기 토글
+      const toggle = document.getElementById("onlyAvailableToggle");
+      toggle.addEventListener("change", (e) => {
+        currentFilter.onlyAvailable = e.target.checked;
+        renderProducts();
+      });
+
+      // 3. 검색 입력
+      const searchInput = document.getElementById("searchInput");
+      const clearBtn = document.getElementById("searchClearBtn");
+
+      searchInput.addEventListener("input", (e) => {
+        const val = e.target.value;
+        currentFilter.keyword = val;
+        clearBtn.style.display = val.length > 0 ? "flex" : "none";
+        renderProducts();
+      });
+
+      clearBtn.addEventListener("click", () => {
+        searchInput.value = "";
+        currentFilter.keyword = "";
+        clearBtn.style.display = "none";
+        renderProducts();
+        searchInput.focus();
+      });
+
+      // 4. 로고 및 검색결과 없음의 리셋 버튼
+      const resetSearchAction = () => {
+        searchInput.value = "";
+        currentFilter.keyword = "";
+        clearBtn.style.display = "none";
+        currentFilter.category = "ALL";
+        currentFilter.onlyAvailable = false;
+        toggle.checked = false;
+        chips.forEach(c => c.classList.remove("active"));
+        chips[0].classList.add("active");
+        renderProducts();
+        showToast("전체 상품 목록으로 돌아왔습니다.");
+      };
+
+      document.getElementById("brandLogo").addEventListener("click", resetSearchAction);
+      document.getElementById("btnResetSearch").addEventListener("click", resetSearchAction);
+
+      // 5. 로그인 버튼 → 인증 모달 열기
+      document.getElementById("btnOpenLogin").addEventListener("click", () => {
+        pendingWriteAfterLogin = false;
+        openAuthModal("login");
+      });
+
+      // 5-1. 로그아웃 버튼
+      document.getElementById("btnLogout").addEventListener("click", handleLogout);
+
+      // 5-2. 인증 모달 닫기
+      document.getElementById("btnAuthClose").addEventListener("click", () => {
+        closeAuthModal();
+        pendingWriteAfterLogin = false;
+      });
+      document.getElementById("authModalOverlay").addEventListener("click", (e) => {
+        if (e.target.id === "authModalOverlay") {
+          closeAuthModal();
+          pendingWriteAfterLogin = false;
+        }
+      });
+
+      // 5-3. 인증 모달 탭 전환
+      document.getElementById("tabBtnLogin").addEventListener("click", () => {
+        document.getElementById("tabBtnLogin").classList.add("active");
+        document.getElementById("tabBtnSignUp").classList.remove("active");
+        document.getElementById("authLoginForm").style.display = "block";
+        document.getElementById("authSignUpForm").style.display = "none";
+        const msgBox = document.getElementById("authMessageBox");
+        msgBox.style.display = "none";
+        msgBox.className = "auth-message-box";
+      });
+      document.getElementById("tabBtnSignUp").addEventListener("click", () => {
+        document.getElementById("tabBtnSignUp").classList.add("active");
+        document.getElementById("tabBtnLogin").classList.remove("active");
+        document.getElementById("authSignUpForm").style.display = "block";
+        document.getElementById("authLoginForm").style.display = "none";
+        const msgBox = document.getElementById("authMessageBox");
+        msgBox.style.display = "none";
+        msgBox.className = "auth-message-box";
+      });
+
+      // 5-4. 텍스트 링크로 탭 전환
+      document.getElementById("linkGoSignUp").addEventListener("click", (e) => {
+        e.preventDefault();
+        document.getElementById("tabBtnSignUp").click();
+      });
+      document.getElementById("linkGoLogin").addEventListener("click", (e) => {
+        e.preventDefault();
+        document.getElementById("tabBtnLogin").click();
+      });
+
+      // 5-5. 로그인 폼 제출
+      document.getElementById("authLoginForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const email = document.getElementById("loginEmail").value.trim();
+        const password = document.getElementById("loginPassword").value;
+        handleLogin(email, password);
+      });
+
+      // 5-6. 회원가입 폼 제출
+      document.getElementById("authSignUpForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const nickname = document.getElementById("signupNickname").value.trim();
+        const email = document.getElementById("signupEmail").value.trim();
+        const password = document.getElementById("signupPassword").value;
+        handleSignUp(email, password, nickname);
+      });
+
+      // 6. [화면 2 상세 모달] 닫기 및 버튼 이벤트
+      document.getElementById("btnDetailClose").addEventListener("click", closeDetailModal);
+      document.getElementById("detailModalOverlay").addEventListener("click", (e) => {
+        if (e.target.id === "detailModalOverlay") closeDetailModal();
+      });
+
+      document.getElementById("btnDetailLike").addEventListener("click", toggleProductLike);
+      document.getElementById("btnDetailChat").addEventListener("click", startChatWithSeller);
+
+      // [화면 4 감자톡 채팅 모달] 제어 이벤트
+      const btnChatModalBack = document.getElementById("btnChatModalBack");
+      if (btnChatModalBack) {
+        btnChatModalBack.addEventListener("click", () => closeChatModal(true));
+      }
+
+      const btnChatModalClose = document.getElementById("btnChatModalClose");
+      if (btnChatModalClose) {
+        btnChatModalClose.addEventListener("click", () => closeChatModal(false));
+      }
+
+      const chatModalOverlay = document.getElementById("chatModalOverlay");
+      if (chatModalOverlay) {
+        chatModalOverlay.addEventListener("click", (e) => {
+          if (e.target.id === "chatModalOverlay") closeChatModal(false);
+        });
+      }
+
+      const chatProdSummaryClick = document.getElementById("chatProdSummaryClick");
+      if (chatProdSummaryClick) {
+        chatProdSummaryClick.addEventListener("click", () => closeChatModal(true));
+      }
+
+      const chatModalInputField = document.getElementById("chatModalInputField");
+      const btnChatModalSend = document.getElementById("btnChatModalSend");
+
+      if (chatModalInputField && btnChatModalSend) {
+        chatModalInputField.addEventListener("input", () => {
+          btnChatModalSend.disabled = chatModalInputField.value.trim().length === 0;
+        });
+
+        chatModalInputField.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            if (!btnChatModalSend.disabled) {
+              sendModalChatMessage(chatModalInputField.value);
+            }
+          }
+        });
+
+        btnChatModalSend.addEventListener("click", () => {
+          sendModalChatMessage(chatModalInputField.value);
+        });
+      }
+
+      const btnModalPromise = document.getElementById("btnModalPromise");
+      if (btnModalPromise) {
+        btnModalPromise.addEventListener("click", () => {
+          sendModalChatMessage("📍 직거래 약속 가능할까요? 언제 어디가 편하신지 말씀해주세요!");
+          showToast("직거래 제안 메시지를 보냈습니다 🥔");
+        });
+      }
+
+      // 7. [화면 3 글쓰기 모달] 열기 / 닫기 (비로그인 시 로그인 모달 먼저)
+      document.getElementById("btnOpenWrite").addEventListener("click", () => {
+        if (!isLoggedIn) {
+          pendingWriteAfterLogin = true;
+          openAuthModal("login", "글을 작성하려면 먼저 로그인해 주세요!");
+          return;
+        }
+        openWriteModal();
+      });
+      document.getElementById("btnWriteClose").addEventListener("click", closeWriteModal);
+      document.getElementById("btnWriteCancel").addEventListener("click", closeWriteModal);
+      document.getElementById("writeModalOverlay").addEventListener("click", (e) => {
+        if (e.target.id === "writeModalOverlay") closeWriteModal();
+      });
+
+      // 8. 내 디바이스 이미지 선택 및 미리보기 제어
+      const btnPickFile = document.getElementById("btnPickFile");
+      const inputImageFile = document.getElementById("inputImageFile");
+      const imagePreviewBox = document.getElementById("imagePreviewBox");
+      const btnRemoveImage = document.getElementById("btnRemoveImage");
+      const fileNameDisplay = document.getElementById("fileNameDisplay");
+      const inputImg = document.getElementById("inputImageUrl");
+
+      if (btnPickFile && inputImageFile) {
+        btnPickFile.addEventListener("click", () => inputImageFile.click());
+      }
+
+      if (imagePreviewBox && inputImageFile) {
+        imagePreviewBox.addEventListener("click", (e) => {
+          if (e.target.id !== "btnRemoveImage") {
+            inputImageFile.click();
+          }
+        });
+      }
+
+      if (btnRemoveImage) {
+        btnRemoveImage.addEventListener("click", (e) => {
+          e.stopPropagation();
+          resetImageSelection();
+          showToast("선택된 사진을 취소했습니다.");
+        });
+      }
+
+      if (inputImageFile) {
+        inputImageFile.addEventListener("change", (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+
+          // 파일 형식 확인
+          if (!file.type.startsWith("image/")) {
+            showToast("이미지 파일만 선택할 수 있습니다.", "⚠️");
+            return;
+          }
+
+          // 용량 제한 (15MB)
+          if (file.size > 15 * 1024 * 1024) {
+            showToast("이미지 용량은 15MB 이하만 가능합니다.", "⚠️");
+            return;
+          }
+
+          selectedDeviceFile = file;
+          fileNameDisplay.textContent = `${file.name} (${(file.size / 1024).toFixed(0)}KB)`;
+          if (inputImg) inputImg.value = ""; // URL 입력창 초기화
+
+          // 브라우저 실시간 미리보기 로드
+          const reader = new FileReader();
+          reader.onload = (uploadEvent) => {
+            const previewImg = document.getElementById("imagePreviewImg");
+            const placeholder = document.getElementById("imagePlaceholder");
+            if (previewImg) {
+              previewImg.src = uploadEvent.target.result;
+              previewImg.style.display = "block";
+            }
+            if (placeholder) placeholder.style.display = "none";
+            if (btnRemoveImage) btnRemoveImage.style.display = "flex";
+          };
+          reader.readAsDataURL(file);
+
+          showToast("내 기기의 사진을 선택했습니다! 📷");
+        });
+      }
+
+      // 8-2. 웹 이미지 URL 입력 시
+      if (inputImg) {
+        inputImg.addEventListener("input", (e) => {
+          if (e.target.value.trim()) {
+            selectedDeviceFile = null;
+            if (inputImageFile) inputImageFile.value = "";
+            if (fileNameDisplay) fileNameDisplay.textContent = "선택된 파일 없음";
+            setPresetImage(e.target.value);
+          }
+        });
+      }
+
+      // 9. 가격 실시간 포맷 보조
+      const inputPrice = document.getElementById("inputPrice");
+      const priceFormatted = document.getElementById("priceFormatted");
+      inputPrice.addEventListener("input", (e) => {
+        const val = parseInt(e.target.value, 10);
+        if (isNaN(val) || val <= 0) {
+          priceFormatted.textContent = val === 0 ? "무료 나눔 🧡" : "0원";
+        } else {
+          priceFormatted.textContent = val.toLocaleString('ko-KR') + "원";
+        }
+      });
+
+      // 9-2. 자세한 설명 500자 제한 및 실시간 글자수 카운터
+      const inputDesc = document.getElementById("inputDescription");
+      const descCountEl = document.getElementById("descCount");
+      inputDesc.addEventListener("input", (e) => {
+        let len = e.target.value.length;
+        if (len > 500) {
+          e.target.value = e.target.value.substring(0, 500);
+          len = 500;
+          showToast("자세한 설명은 최대 500자까지 작성 가능합니다.", "⚠️");
+        }
+        descCountEl.textContent = len;
+        if (len >= 500) {
+          descCountEl.style.color = "#e5484d";
+        } else if (len >= 450) {
+          descCountEl.style.color = "#e69500";
+        } else {
+          descCountEl.style.color = "var(--potato-primary)";
+        }
+      });
+
+      // 10. 글쓰기 폼 전송 (내 디바이스 이미지 Supabase Storage 업로드 & 상품 등록)
+      const writeForm = document.getElementById("writeForm");
+      const submitBtn = document.getElementById("btnWriteSubmit");
+
+      writeForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const title = document.getElementById("inputTitle").value.trim();
+        const category = document.getElementById("selectCategory").value;
+        const price = parseInt(document.getElementById("inputPrice").value, 10) || 0;
+        const description = document.getElementById("inputDescription").value.trim();
+        const location = document.getElementById("inputLocation").value.trim() || "역삼동";
+
+        const selectedStatusRadio = document.querySelector('input[name="writeStatus"]:checked');
+        const status = selectedStatusRadio ? selectedStatusRadio.value : "판매중";
+
+        if (!title || !category || !description) {
+          showToast("필수 입력 항목을 모두 작성해주세요!", "⚠️");
+          return;
+        }
+
+        if (description.length > 500) {
+          showToast("자세한 설명은 최대 500자 이하로 작성해주세요!", "⚠️");
+          return;
+        }
+
+        try {
+          submitBtn.disabled = true;
+
+          let finalImageUrl = DEFAULT_POTATO_IMG;
+
+          // A. 내 디바이스에서 선택한 파일이 있는 경우 -> Supabase Storage에 업로드
+          if (selectedDeviceFile && sbClient) {
+            submitBtn.textContent = "사진 업로드 중... 🥔📷";
+            const fileExt = selectedDeviceFile.name.split('.').pop() || 'jpg';
+            const cleanExt = fileExt.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const uniqueFileName = `potato_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${cleanExt || 'jpg'}`;
+
+            const { data: uploadData, error: uploadErr } = await sbClient.storage
+              .from("product-images")
+              .upload(uniqueFileName, selectedDeviceFile, {
+                cacheControl: "3600",
+                upsert: true
+              });
+
+            if (!uploadErr && uploadData) {
+              const { data: publicData } = sbClient.storage
+                .from("product-images")
+                .getPublicUrl(uniqueFileName);
+              
+              if (publicData && publicData.publicUrl) {
+                finalImageUrl = publicData.publicUrl;
+              }
+            } else {
+              console.warn("Storage 업로드 실패 (미리보기 Base64 사용):", uploadErr);
+              const previewImg = document.getElementById("imagePreviewImg");
+              if (previewImg && previewImg.src) {
+                finalImageUrl = previewImg.src;
+              }
+            }
+          } else {
+            // B. URL 직접 입력 또는 기본 감자 이미지
+            const inputUrlVal = (document.getElementById("inputImageUrl")?.value || "").trim();
+            if (inputUrlVal) {
+              finalImageUrl = inputUrlVal;
+            }
+          }
+
+          submitBtn.textContent = "감자 등록 중... 🥔";
+
+          if (sbClient) {
+            // Supabase products 테이블에 INSERT
+            const { data, error } = await sbClient
+              .from("products")
+              .insert({
+                seller_id: currentUserId,
+                title: title,
+                category: category,
+                price: price,
+                is_negotiable: false,
+                description: description,
+                trade_location: location,
+                status: status,
+                image_url: finalImageUrl
+              })
+              .select();
+
+            if (error) throw error;
+          }
+
+          // 모달 닫기
+          closeWriteModal();
+
+          // Supabase 데이터 최신화
+          await loadProductsFromSupabase();
+
+          showToast(`'${title}' 상품이 등록되었습니다! 🥔🎉`);
+        } catch (err) {
+          console.error("상품 등록 실패 상세:", err);
+          const errMsg = err?.message || err?.error_description || "다시 시도해주세요.";
+          showToast(`등록 실패: ${errMsg}`, "⚠️");
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "작성 완료 🥔";
+        }
+      });
+
+      // 푸터 submit 버튼 클릭 보조 (form 외부에 위치하더라도 확실히 동작하도록)
+      if (submitBtn) {
+        submitBtn.addEventListener("click", () => {
+          if (writeForm.requestSubmit) {
+            writeForm.requestSubmit();
+          } else {
+            writeForm.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+          }
+        });
+      }
+
+      // 11. ESC 키로 모든 모달 닫기 지원
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeDetailModal();
+          closeWriteModal();
+          closeAuthModal();
+          pendingWriteAfterLogin = false;
+        }
+      });
+
+      // 12. Supabase 인증 세션 복원 후 상품 로드
+      syncAuthSession().then(() => {
+        loadProductsFromSupabase();
+      });
+
+      // 13. Supabase Auth 상태 변경 구독 (탭 전환/자동 갱신 등)
+      if (sbClient) {
+        sbClient.auth.onAuthStateChange(async (event, session) => {
+          if (session && session.user) {
+            currentUserId = session.user.id;
+            isLoggedIn = true;
+            currentUserNickname = session.user.user_metadata?.nickname || null;
+            if (!currentUserNickname) {
+              currentUserNickname = await fetchUserNickname(currentUserId);
+            }
+            if (!currentUserNickname) {
+              currentUserNickname = session.user.email?.split("@")[0] || "감자이웃";
+            }
+          } else {
+            currentUserId = null;
+            currentUserNickname = null;
+            isLoggedIn = false;
+          }
+          updateHeaderAuthUI();
+        });
+      }
+    });
+  </script>
+</body>
+</html>

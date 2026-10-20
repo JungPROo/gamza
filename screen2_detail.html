@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>감자 마켓 - 상품 상세 모달</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <style>
+    /* ----------------------------------------------------
+       [기본 리셋 및 디자인 토큰]
+       감자 브랜드 테마: 따뜻한 브라운 포인트 (#b07d4b, #8c5828) & 아이보리 바탕 (#fdfaf6)
+    ---------------------------------------------------- */
+    :root {
+      --potato-primary: #b07d4b;
+      --potato-dark: #8c5828;
+      --potato-darker: #673f1a;
+      --potato-light: #d8a876;
+      --potato-bg: #fdfaf6;
+      --potato-card-bg: #ffffff;
+      --potato-subtle: #f5ede4;
+      --potato-border: #ede1d3;
+      --potato-accent-gold: #f4b342;
+
+      /* 상태 색상 */
+      --status-selling-bg: #e8f5e9;
+      --status-selling-text: #2e7d32;
+      --status-reserved-bg: #fff3e0;
+      --status-reserved-text: #e65100;
+      --status-completed-bg: #eceff1;
+      --status-completed-text: #546e7a;
+
+      /* 텍스트 색상 */
+      --text-main: #2b2520;
+      --text-sub: #695e54;
+      --text-muted: #9b8f84;
+      --text-light: #c2b7ab;
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+      
+      --shadow-sm: 0 2px 8px rgba(90, 60, 30, 0.06);
+      --shadow-md: 0 8px 24px rgba(90, 60, 30, 0.1);
+      --shadow-lg: 0 16px 40px rgba(70, 45, 20, 0.18);
+      --shadow-modal: 0 24px 60px rgba(45, 25, 10, 0.32);
+
+      --transition-fast: 0.18s cubic-bezier(0.2, 0, 0, 1);
+      --transition-smooth: 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      background-color: var(--potato-bg);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding: 24px 16px 80px;
+      min-height: 100vh;
+    }
+
+    /* ----------------------------------------------------
+       [단독 테스트용 화면 레이아웃 (테스트 갤러리/컨트롤러)]
+    ---------------------------------------------------- */
+    .test-header {
+      max-width: 960px;
+      margin: 0 auto 32px;
+      text-align: center;
+      padding: 20px 16px;
+      background: linear-gradient(135deg, #ffffff 0%, var(--potato-subtle) 100%);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--potato-border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .test-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--potato-dark);
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .test-logo span.badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      background-color: var(--potato-primary);
+      color: #fff;
+      padding: 3px 10px;
+      border-radius: 999px;
+      vertical-align: middle;
+    }
+
+    .test-desc {
+      color: var(--text-sub);
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+    }
+
+    .test-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn-test {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      background: #fff;
+      border: 1px solid var(--potato-border);
+      color: var(--potato-darker);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-test:hover {
+      background: var(--potato-subtle);
+      border-color: var(--potato-primary);
+      transform: translateY(-1px);
+    }
+
+    .btn-test.primary {
+      background: var(--potato-primary);
+      color: #ffffff;
+      border-color: var(--potato-primary);
+    }
+    .btn-test.primary:hover {
+      background: var(--potato-dark);
+    }
+
+    /* 카드 그리드 테스트 영역 */
+    .test-grid-container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .test-grid-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .test-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .sample-card {
+      background: #ffffff;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--potato-border);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sample-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--potato-light);
+    }
+
+    .sample-card-img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      background-color: var(--potato-subtle);
+    }
+
+    .sample-card-body {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .sample-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-main);
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .sample-card-price {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--potato-darker);
+      margin-bottom: 8px;
+    }
+
+    .sample-card-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: auto;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* ----------------------------------------------------
+       [모달 팝업 오버레이 & 컨테이너 구조]
+    ---------------------------------------------------- */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(30, 20, 10, 0.65);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity var(--transition-smooth), visibility var(--transition-smooth);
+      padding: 16px;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* 모달 윈도우 */
+    .modal-dialog {
+      background: var(--potato-card-bg);
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-modal);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transform: scale(0.92) translateY(24px);
+      opacity: 0;
+      transition: transform var(--transition-smooth), opacity var(--transition-smooth);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .modal-overlay.active .modal-dialog {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+
+    /* 닫기 버튼 (우상단 글래스모피즘 플로팅) */
+    .modal-close-btn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(30, 20, 10, 0.45);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 20;
+      transition: all var(--transition-fast);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-close-btn:hover {
+      background: rgba(30, 20, 10, 0.75);
+      transform: rotate(90deg) scale(1.05);
+    }
+
+    .modal-close-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* 모달 내부 스크롤 가능한 본문 영역 */
+    .modal-scroll-area {
+      overflow-y: auto;
+      overflow-x: hidden;
+      flex: 1;
+      scrollbar-width: thin;
+      scrollbar-color: var(--potato-light) transparent;
+      padding-bottom: 12px;
+    }
+
+    .modal-scroll-area::-webkit-scrollbar {
+      width: 6px;
+    }
+    .modal-scroll-area::-webkit-scrollbar-thumb {
+      background: var(--potato-light);
+      border-radius: 999px;
+    }
+
+    /* ----------------------------------------------------
+       [모달 상단: 대표 이미지 영역]
+    ---------------------------------------------------- */
+    .modal-media-wrap {
+      position: relative;
+      width: 100%;
+      height: 340px;
+      background: linear-gradient(180deg, var(--potato-subtle) 0%, #ecdcca 100%);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-media-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+
+    .modal-media-wrap:hover .modal-media-img {
+      transform: scale(1.02);
+    }
+
+    /* 이미지 없을 때 기본 플레이스홀더 */
+    .modal-media-placeholder {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--potato-dark);
+      gap: 10px;
+    }
+
+    .modal-media-placeholder svg {
+      width: 64px;
+      height: 64px;
+      opacity: 0.6;
+    }
+
+    /* 이미지 그라데이션 오버레이 (상단 닫기버튼 시인성 확보) */
+    .modal-media-wrap::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.38) 0%, rgba(0,0,0,0) 100%);
+      pointer-events: none;
+    }
+
+    /* ----------------------------------------------------
+       [모달 하단: 상세 내용 영역]
+    ---------------------------------------------------- */
+    .modal-content-wrap {
+      padding: 22px 22px 14px;
+    }
+
+    /* 상태 뱃지 & 카테고리 태그 */
+    .modal-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      letter-spacing: -0.2px;
+    }
+
+    .badge-status.selling {
+      background-color: var(--status-selling-bg);
+      color: var(--status-selling-text);
+      border: 1px solid rgba(46, 125, 50, 0.2);
+    }
+    .badge-status.reserved {
+      background-color: var(--status-reserved-bg);
+      color: var(--status-reserved-text);
+      border: 1px solid rgba(230, 81, 0, 0.2);
+    }
+    .badge-status.completed {
+      background-color: var(--status-completed-bg);
+      color: var(--status-completed-text);
+      border: 1px solid rgba(84, 110, 122, 0.2);
+    }
+
+    .badge-status::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: currentColor;
+    }
+
+    .tag-category {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--potato-dark);
+      background-color: var(--potato-subtle);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    /* 상품명 */
+    .modal-product-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.35;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      word-break: keep-all;
+    }
+
+    /* 위치 및 시간 메타 */
+    .modal-location-time {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .modal-location-time .meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .modal-location-time svg {
+      width: 15px;
+      height: 15px;
+      stroke: var(--text-muted);
+      stroke-width: 2;
+    }
+
+    /* 가격 영역 */
+    .modal-price-wrap {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--potato-border);
+      margin-bottom: 20px;
+    }
+
+    .modal-price {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: var(--potato-darker);
+      letter-spacing: -0.6px;
+    }
+
+    .modal-price.free {
+      color: #ea580c;
+    }
+
+    .modal-price-negotiable {
+      font-size: 0.82rem;
+      color: var(--potato-primary);
+      font-weight: 600;
+      background: var(--potato-subtle);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    /* 판매자 정보 카드 */
+    .seller-profile-card {
+      background: linear-gradient(to right, #faf6f0, #ffffff);
+      border: 1px solid var(--potato-border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      margin-bottom: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .seller-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .seller-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      background-color: var(--potato-subtle);
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      flex-shrink: 0;
+    }
+
+    .seller-info {
+      min-width: 0;
+    }
+
+    .seller-nickname {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .seller-region {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* 매너 감자 온도 */
+    .potato-temp-card {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .potato-temp-header {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+    }
+
+    .potato-temp-value {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--potato-dark);
+      letter-spacing: -0.3px;
+    }
+
+    .potato-temp-icon {
+      font-size: 1rem;
+    }
+
+    .potato-temp-bar-bg {
+      width: 90px;
+      height: 6px;
+      background-color: #e5ded4;
+      border-radius: 999px;
+      margin-top: 4px;
+      overflow: hidden;
+    }
+
+    .potato-temp-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #d8a876, var(--potato-dark));
+      transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .potato-temp-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    /* 상품 상세 본문 */
+    .modal-description-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .modal-description {
+      font-size: 0.96rem;
+      color: #3e3731;
+      line-height: 1.75;
+      white-space: pre-wrap;
+      word-break: break-word;
+      padding-bottom: 12px;
+    }
+
+    /* 상품 통계 메타 (조회/관심/채팅) */
+    .modal-stats {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 12px;
+      padding: 12px 0 6px;
+      border-top: 1px dashed var(--potato-border);
+      margin-top: 10px;
+    }
+
+    /* ----------------------------------------------------
+       [모달 하단: 고정 액션바 버튼]
+    ---------------------------------------------------- */
+    .modal-action-bar {
+      padding: 12px 18px 16px;
+      background: #ffffff;
+      border-top: 1px solid var(--potato-border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 -4px 16px rgba(50, 30, 10, 0.05);
+      position: sticky;
+      bottom: 0;
+      z-index: 10;
+    }
+
+    /* 관심 추가 (찜) 버튼 */
+    .btn-like {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      background: var(--potato-subtle);
+      border: 1px solid var(--potato-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all var(--transition-fast);
+      flex-shrink: 0;
+    }
+
+    .btn-like:hover {
+      background: #ece0d3;
+      transform: scale(1.04);
+    }
+
+    .btn-like svg {
+      width: 24px;
+      height: 24px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), fill 0.2s ease, stroke 0.2s ease;
+    }
+
+    .btn-like.active {
+      color: #e53935;
+      background: #ffebee;
+      border-color: #ffcdd2;
+    }
+
+    .btn-like.active svg {
+      fill: #e53935;
+      stroke: #e53935;
+      transform: scale(1.15);
+    }
+
+    /* 채팅 시작하기 버튼 */
+    .btn-chat-primary {
+      flex: 1;
+      height: 48px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #ffe066 0%, #ffc107 100%);
+      color: #3c2008;
+      border: 1px solid rgba(255, 179, 0, 0.4);
+      font-size: 1.02rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(255, 193, 7, 0.45);
+      transition: all var(--transition-fast);
+    }
+
+    .btn-chat-primary:hover {
+      background: linear-gradient(135deg, #ffd54f 0%, #ffb300 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(255, 193, 7, 0.55);
+    }
+
+    .btn-chat-primary:active {
+      transform: translateY(1px);
+    }
+
+    .btn-chat-primary svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    /* ----------------------------------------------------
+       [토스트 알림 컴포넌트]
+    ---------------------------------------------------- */
+    .potato-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(40px);
+      background: rgba(35, 25, 18, 0.92);
+      color: #ffffff;
+      padding: 12px 22px;
+      border-radius: 999px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(8px);
+    }
+
+    .potato-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ----------------------------------------------------
+       [모바일 반응형 최적화 (Bottom Sheet 스타일 지원)]
+    ---------------------------------------------------- */
+    @media (max-width: 640px) {
+      body {
+        padding: 16px 10px 80px;
+      }
+
+      .modal-overlay {
+        padding: 0;
+        align-items: flex-end;
+      }
+
+      .modal-dialog {
+        max-width: 100%;
+        max-height: 92vh;
+        border-radius: 24px 24px 0 0;
+        transform: translateY(100%);
+      }
+
+      .modal-overlay.active .modal-dialog {
+        transform: translateY(0);
+      }
+
+      /* 모바일 드래그 핸들 (시각적 바텀시트 느낌) */
+      .modal-dialog::before {
+        content: "";
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 38px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 999px;
+        z-index: 25;
+      }
+
+      .modal-media-wrap {
+        height: 290px;
+      }
+
+      .modal-content-wrap {
+        padding: 18px 16px 10px;
+      }
+
+      .modal-product-title {
+        font-size: 1.3rem;
+      }
+
+      .modal-price {
+        font-size: 1.45rem;
+      }
+
+      .modal-action-bar {
+        padding: 10px 14px 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- [테스트용 컨트롤 및 메인 화면 영역] -->
+  <header class="test-header">
+    <div class="test-logo">
+      🥔 감자 마켓
+      <span class="badge">화면 2 상세 모달</span>
+    </div>
+    <p class="test-desc">
+      카드를 클릭하거나 버튼을 눌러 따뜻한 감자 무드의 <strong>상세 팝업 모달</strong>을 테스트해보세요.
+    </p>
+    <div class="test-actions">
+      <button class="btn-test primary" onclick="openSample(0)">
+        🥔 기본 샘플 (판매중)
+      </button>
+      <button class="btn-test" onclick="openSample(1)">
+        ⏳ 예약중 샘플
+      </button>
+      <button class="btn-test" onclick="openSample(2)">
+        🎁 무료 나눔 샘플
+      </button>
+      <button class="btn-test" onclick="openSample(3)">
+        ✔️ 거래완료 샘플
+      </button>
+      <button class="btn-test" onclick="openCustomPrompt()">
+        ✨ 커스텀 데이터 주입
+      </button>
+    </div>
+  </header>
+
+  <main class="test-grid-container">
+    <h2 class="test-grid-title">
+      <span>📦</span> 오늘의 감자 추천 매물 (클릭하여 상세 모달 열기)
+    </h2>
+    <div class="test-grid" id="sampleCardGrid">
+      <!-- JS로 샘플 카드 렌더링 -->
+    </div>
+  </main>
+
+  <!-- ====================================================
+       [상세 팝업 모달 마크업]
+       외부 인터페이스: window.showDetailModal(productData)
+       ==================================================== -->
+  <div class="modal-overlay" id="productDetailModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-dialog">
+      <!-- 우상단 닫기 버튼 -->
+      <button class="modal-close-btn" id="modalCloseBtn" aria-label="닫기">
+        <svg viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <!-- 모달 스크롤 본문 -->
+      <div class="modal-scroll-area">
+        <!-- 상단: 상품 대표 이미지 영역 (약 절반) -->
+        <div class="modal-media-wrap">
+          <img src="" alt="상품 이미지" class="modal-media-img" id="modalImage">
+          <div class="modal-media-placeholder" id="modalImagePlaceholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="3" y="3" width="18" height="18" rx="4" ry="4"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            <span>이미지가 없는 감자 매물입니다</span>
+          </div>
+        </div>
+
+        <!-- 하단: 본문 정보 영역 -->
+        <div class="modal-content-wrap">
+          <!-- 1. 판매 상태 뱃지 & 카테고리 태그 -->
+          <div class="modal-badge-row">
+            <span class="badge-status selling" id="modalStatusBadge">판매중</span>
+            <span class="tag-category" id="modalCategoryTag">디지털기기</span>
+          </div>
+
+          <!-- 2. 상품명 -->
+          <h1 class="modal-product-title" id="modalTitle">상품명이 표시됩니다</h1>
+
+          <!-- 3. 판매 위치 및 업로드 시간 -->
+          <div class="modal-location-time">
+            <div class="meta-item">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"></path>
+                <circle cx="12" cy="9" r="2.5"></circle>
+              </svg>
+              <span id="modalLocation">강남구 역삼1동</span>
+            </div>
+            <span>•</span>
+            <div class="meta-item">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span id="modalTime">23분 전</span>
+            </div>
+          </div>
+
+          <!-- 4. 가격 -->
+          <div class="modal-price-wrap">
+            <span class="modal-price" id="modalPrice">350,000원</span>
+            <span class="modal-price-negotiable" id="modalNegotiable">가격 제안 가능</span>
+          </div>
+
+          <!-- 6. 판매자 정보 카드 -->
+          <div class="seller-profile-card">
+            <div class="seller-left">
+              <img src="" alt="판매자 프로필" class="seller-avatar" id="modalSellerAvatar">
+              <div class="seller-info">
+                <div class="seller-nickname">
+                  <span id="modalSellerNick">포슬감자</span>
+                  <span id="modalSellerBadge" title="감자 인증 완료">🥔</span>
+                </div>
+                <div class="seller-region" id="modalSellerRegion">역삼1동 인증 15회</div>
+              </div>
+            </div>
+
+            <!-- 매너 감자 온도 -->
+            <div class="potato-temp-card">
+              <div class="potato-temp-header">
+                <span class="potato-temp-value" id="modalPotatoTemp">36.5℃</span>
+                <span class="potato-temp-icon" id="modalPotatoTempIcon">🥔</span>
+              </div>
+              <div class="potato-temp-bar-bg">
+                <div class="potato-temp-bar-fill" id="modalPotatoTempBar" style="width: 36.5%;"></div>
+              </div>
+              <div class="potato-temp-label">포슬 감자지수</div>
+            </div>
+          </div>
+
+          <!-- 5. 상품 설명 (자세하고 넉넉한 줄간격) -->
+          <div class="modal-description-title">상품 설명</div>
+          <p class="modal-description" id="modalDescription">상품 설명 내용이 들어갑니다.</p>
+
+          <!-- 조회/관심 통계 -->
+          <div class="modal-stats">
+            <span>조회 <strong id="modalViews">124</strong></span>
+            <span>•</span>
+            <span>관심 <strong id="modalLikesCount">18</strong></span>
+            <span>•</span>
+            <span>채팅 <strong id="modalChatsCount">5</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. 맨 아래 고정/배치 버튼 영역 -->
+      <footer class="modal-action-bar">
+        <button class="btn-like" id="modalLikeBtn" aria-label="관심 목록 추가">
+          <svg viewBox="0 0 24 24">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </button>
+        <button class="btn-chat-primary" id="modalChatBtn">
+          <svg viewBox="0 0 24 24">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"></path>
+          </svg>
+          <span>채팅 시작하기</span>
+        </button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- 토스트 알림 컴포넌트 -->
+  <div class="potato-toast" id="potatoToast">
+    <span id="toastIcon">🥔</span>
+    <span id="toastMsg">알림 메시지</span>
+  </div>
+
+  <!-- ====================================================
+       [스크립트 로직]
+       ==================================================== -->
+  <script>
+    // 1. 단독 테스트를 위한 샘플 더미 데이터셋
+    const SAMPLE_PRODUCTS = [
+      {
+        id: "prod-101",
+        title: "강원도 고랭지 햇감자 10kg (포슬포슬 분나는 수미감자)",
+        category: "농수산물 / 식품",
+        status: "selling", // selling | reserved | completed
+        statusText: "판매중",
+        price: 24000,
+        isFree: false,
+        negotiable: true,
+        location: "강원도 강릉시 주문진읍",
+        timeAgo: "15분 전",
+        image: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=1000&q=80",
+        description: `올해 첫 수확한 햇 수미감자 10kg 한 박스입니다! 🥔\n\n밭에서 바로 캐서 흙만 털어내고 신선하게 보내드립니다. 삶았을 때 포슬포슬하게 분이 팍팍 나고 달달하면서 담백해요. 감자전, 옹심이, 감자조림, 버터구이 해먹으면 꿀맛입니다.\n\n• 보관방법: 통풍 잘되는 그늘진 곳에 사과 한 개와 함께 보관하시면 싹이 잘 안 납니다.\n• 직거래: 주문진읍 인근 가능하며, 택배 거래도 꼼꼼히 포장해드려요!`,
+        seller: {
+          nickname: "알감자할머니",
+          avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
+          region: "주문진읍 · 인증 32회",
+          temp: 42.8,
+          tempIcon: "🥔🔥"
+        },
+        stats: { views: 342, likes: 29, chats: 7 },
+        isLiked: false
+      },
+      {
+        id: "prod-102",
+        title: "소니 WH-1000XM5 노이즈 캔슬링 헤드폰 (풀박스 S급)",
+        category: "디지털기기",
+        status: "reserved",
+        statusText: "예약중",
+        price: 330000,
+        isFree: false,
+        negotiable: false,
+        location: "서울시 강남구 역삼1동",
+        timeAgo: "42분 전",
+        image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1000&q=80",
+        description: `작년 말에 구매하여 실사용 5회 미만인 특S급 헤드폰입니다.\n\n실내 데스크탑 환경에서만 잠깐 청음했고 외출 시 착용한 적 없습니다. 구성품(케이블, 어댑터, 파우치, 박스) 모두 보관 중입니다. 배터리 컨디션 100% 최상입니다.\n\n현재 예약자분이 계셔서 잠시 예약중 상태로 변경해두었습니다! 불발 시 채팅 순서대로 연락드리겠습니다.`,
+        seller: {
+          nickname: "테크감자",
+          avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+          region: "역삼1동 · 인증 54회",
+          temp: 38.6,
+          tempIcon: "🥔"
+        },
+        stats: { views: 512, likes: 64, chats: 12 },
+        isLiked: true
+      },
+      {
+        id: "prod-103",
+        title: "[나눔] 감자 싹 틔운 베란다 텃밭용 화분 & 배양토 세트",
+        category: "식물 / 가드닝",
+        status: "selling",
+        statusText: "판매중",
+        price: 0,
+        isFree: true,
+        negotiable: false,
+        location: "서울시 송파구 잠실본동",
+        timeAgo: "2시간 전",
+        image: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=1000&q=80",
+        description: `아이들과 베란다에서 감자 키우기 체험용으로 쓰던 플랜터와 분갈이용 흙 나눔합니다! 🪴\n\n깨끗하게 세척해두었고 아이들이 정말 신기해해요. 주말 동안 직접 가지러 오실 수 있는 분께 우선 나눔 드립니다. 따뜻한 마음으로 키워주실 분 연락주세요!`,
+        seller: {
+          nickname: "초록감자",
+          avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80",
+          region: "잠실본동 · 인증 19회",
+          temp: 51.2,
+          tempIcon: "🥔🌱"
+        },
+        stats: { views: 189, likes: 15, chats: 9 },
+        isLiked: false
+      },
+      {
+        id: "prod-104",
+        title: "이케아 원목 협탁 겸 감성 사이드 테이블 (자작나무)",
+        category: "가구 / 인테리어",
+        status: "completed",
+        statusText: "거래완료",
+        price: 18000,
+        isFree: false,
+        negotiable: false,
+        location: "서울시 마포구 연남동",
+        timeAgo: "1일 전",
+        image: "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?auto=format&fit=crop&w=1000&q=80",
+        description: `이사로 인해 정리합니다. 찍힘이나 스크래치 전혀 없고 원목 오일링 먹여두어 상태 매우 좋습니다.\n\n매너 좋으신 이웃분과 기분 좋게 거래 완료되었습니다. 감사합니다!`,
+        seller: {
+          nickname: "연남동감자돌이",
+          avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=200&q=80",
+          region: "연남동 · 인증 8회",
+          temp: 36.5,
+          tempIcon: "🥔"
+        },
+        stats: { views: 420, likes: 31, chats: 6 },
+        isLiked: false
+      }
+    ];
+
+    // 현재 열려있는 상품 데이터 캐싱
+    let currentActiveProduct = null;
+
+    // DOM 요소 캐싱
+    const modalOverlay = document.getElementById('productDetailModal');
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+    const modalImage = document.getElementById('modalImage');
+    const modalImagePlaceholder = document.getElementById('modalImagePlaceholder');
+    const modalStatusBadge = document.getElementById('modalStatusBadge');
+    const modalCategoryTag = document.getElementById('modalCategoryTag');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalLocation = document.getElementById('modalLocation');
+    const modalTime = document.getElementById('modalTime');
+    const modalPrice = document.getElementById('modalPrice');
+    const modalNegotiable = document.getElementById('modalNegotiable');
+    const modalSellerAvatar = document.getElementById('modalSellerAvatar');
+    const modalSellerNick = document.getElementById('modalSellerNick');
+    const modalSellerRegion = document.getElementById('modalSellerRegion');
+    const modalPotatoTemp = document.getElementById('modalPotatoTemp');
+    const modalPotatoTempIcon = document.getElementById('modalPotatoTempIcon');
+    const modalPotatoTempBar = document.getElementById('modalPotatoTempBar');
+    const modalDescription = document.getElementById('modalDescription');
+    const modalViews = document.getElementById('modalViews');
+    const modalLikesCount = document.getElementById('modalLikesCount');
+    const modalChatsCount = document.getElementById('modalChatsCount');
+    const modalLikeBtn = document.getElementById('modalLikeBtn');
+    const modalChatBtn = document.getElementById('modalChatBtn');
+    const potatoToast = document.getElementById('potatoToast');
+    const toastMsg = document.getElementById('toastMsg');
+    const toastIcon = document.getElementById('toastIcon');
+
+    let toastTimer = null;
+
+    // 토스트 띄우기 함수
+    function showToast(message, icon = "🥔") {
+      if (toastTimer) clearTimeout(toastTimer);
+      toastMsg.textContent = message;
+      toastIcon.textContent = icon;
+      potatoToast.classList.add('show');
+      toastTimer = setTimeout(() => {
+        potatoToast.classList.remove('show');
+      }, 2600);
+    }
+
+    // 숫자 포맷터 (원 단위)
+    function formatPrice(val, isFree) {
+      if (isFree || val === 0) {
+        return "나눔 🧡";
+      }
+      if (typeof val === 'number') {
+        return val.toLocaleString('ko-KR') + "원";
+      }
+      return val ? String(val) : "가격 미정";
+    }
+
+    /* ====================================================
+       [외부 공개 인터페이스: window.showDetailModal(data)]
+       ==================================================== */
+    window.showDetailModal = function(data) {
+      if (!data) return;
+      currentActiveProduct = data;
+
+      // 1. 이미지 세팅
+      if (data.image) {
+        modalImage.style.display = 'block';
+        modalImagePlaceholder.style.display = 'none';
+        modalImage.src = data.image;
+        modalImage.alt = data.title || "상품 이미지";
+      } else {
+        modalImage.style.display = 'none';
+        modalImagePlaceholder.style.display = 'flex';
+      }
+
+      // 2. 판매 상태 뱃지
+      const status = data.status || 'selling';
+      modalStatusBadge.className = 'badge-status ' + status;
+      if (status === 'reserved') {
+        modalStatusBadge.textContent = data.statusText || '예약중';
+      } else if (status === 'completed') {
+        modalStatusBadge.textContent = data.statusText || '거래완료';
+      } else {
+        modalStatusBadge.textContent = data.statusText || '판매중';
+      }
+
+      // 카테고리 태그
+      modalCategoryTag.textContent = data.category || '기타 중고물품';
+
+      // 3. 상품명
+      modalTitle.textContent = data.title || '제목 없음';
+
+      // 4. 위치 및 업로드 시간
+      modalLocation.textContent = data.location || '위치 미지정';
+      modalTime.textContent = data.timeAgo || '방금 전';
+
+      // 5. 가격 및 가격제안 여부
+      const isFree = data.isFree || data.price === 0;
+      modalPrice.textContent = formatPrice(data.price, isFree);
+      if (isFree) {
+        modalPrice.classList.add('free');
+        modalNegotiable.style.display = 'none';
+      } else {
+        modalPrice.classList.remove('free');
+        if (data.negotiable) {
+          modalNegotiable.style.display = 'inline-block';
+          modalNegotiable.textContent = '가격 제안 가능';
+        } else {
+          modalNegotiable.style.display = 'none';
+        }
+      }
+
+      // 6. 판매자 정보
+      const seller = data.seller || {};
+      modalSellerNick.textContent = seller.nickname || '익명 감자';
+      modalSellerAvatar.src = seller.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80';
+      modalSellerRegion.textContent = seller.region || '동네 인증 완료';
+
+      // 매너 감자 온도
+      const temp = seller.temp !== undefined ? seller.temp : 36.5;
+      modalPotatoTemp.textContent = temp.toFixed(1) + '℃';
+      modalPotatoTempIcon.textContent = seller.tempIcon || (temp >= 40 ? '🥔🔥' : '🥔');
+      // 최대 100도 기준 바 너비 계산 (기본 30~60도 범위 중심 시각화)
+      const fillPercentage = Math.min(Math.max((temp / 60) * 100, 10), 100);
+      modalPotatoTempBar.style.width = fillPercentage + '%';
+
+      // 7. 상품 설명
+      modalDescription.textContent = data.description || '작성된 상품 설명이 없습니다.';
+
+      // 통계
+      const stats = data.stats || { views: 0, likes: 0, chats: 0 };
+      modalViews.textContent = stats.views || 0;
+      modalLikesCount.textContent = stats.likes || 0;
+      modalChatsCount.textContent = stats.chats || 0;
+
+      // 찜(관심) 상태
+      if (data.isLiked) {
+        modalLikeBtn.classList.add('active');
+      } else {
+        modalLikeBtn.classList.remove('active');
+      }
+
+      // 거래 완료 상태일 경우 채팅 버튼 텍스트 변경
+      if (status === 'completed') {
+        modalChatBtn.innerHTML = `<span>거래가 완료된 상품입니다</span>`;
+        modalChatBtn.style.opacity = '0.7';
+      } else {
+        modalChatBtn.innerHTML = `
+          <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"></path></svg>
+          <span>채팅 시작하기</span>
+        `;
+        modalChatBtn.style.opacity = '1';
+      }
+
+      // 모달 열기 애니메이션 실행 & 스크롤 잠금
+      modalOverlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      // 모달 스크롤 맨 위로 리셋
+      const scrollArea = document.querySelector('.modal-scroll-area');
+      if (scrollArea) scrollArea.scrollTop = 0;
+    };
+
+    /* ====================================================
+       [외부 공개 인터페이스: window.closeDetailModal()]
+       ==================================================== */
+    window.closeDetailModal = function() {
+      modalOverlay.classList.remove('active');
+      document.body.style.overflow = '';
+    };
+
+    // 닫기 이벤트 바인딩 (X버튼, 오버레이 배경 클릭, ESC 키)
+    modalCloseBtn.addEventListener('click', window.closeDetailModal);
+
+    modalOverlay.addEventListener('click', (e) => {
+      // 모달 바깥 어두운 배경 클릭 시 닫기
+      if (e.target === modalOverlay) {
+        window.closeDetailModal();
+      }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modalOverlay.classList.contains('active')) {
+        window.closeDetailModal();
+      }
+    });
+
+    // 찜(관심 추가) 토글 인터랙션
+    modalLikeBtn.addEventListener('click', () => {
+      const isCurrentlyLiked = modalLikeBtn.classList.contains('active');
+      if (isCurrentlyLiked) {
+        modalLikeBtn.classList.remove('active');
+        if (currentActiveProduct) {
+          currentActiveProduct.isLiked = false;
+          currentActiveProduct.stats.likes = Math.max(0, (currentActiveProduct.stats.likes || 1) - 1);
+          modalLikesCount.textContent = currentActiveProduct.stats.likes;
+        }
+        showToast("관심 목록에서 제외했습니다.", "🤍");
+      } else {
+        modalLikeBtn.classList.add('active');
+        if (currentActiveProduct) {
+          currentActiveProduct.isLiked = true;
+          currentActiveProduct.stats.likes = (currentActiveProduct.stats.likes || 0) + 1;
+          modalLikesCount.textContent = currentActiveProduct.stats.likes;
+        }
+        showToast("관심 목록에 추가되었습니다! ♡", "🥔🧡");
+      }
+    });
+
+    // 채팅 시작 버튼 인터랙션
+    modalChatBtn.addEventListener('click', () => {
+      if (currentActiveProduct && currentActiveProduct.status === 'completed') {
+        showToast("이미 거래가 완료된 매물입니다.", "⚠️");
+        return;
+      }
+      const nick = currentActiveProduct?.seller?.nickname || "판매자";
+      const prodId = currentActiveProduct?.id || 1;
+      showToast(`'${nick}'님과의 1:1 감자톡 화면으로 이동합니다... 💬`, "🥔");
+      setTimeout(() => {
+        window.location.href = `screen4_chat.html?productId=${prodId}`;
+      }, 500);
+    });
+
+    // ----------------------------------------------------
+    // [단독 테스트 갤러리 카드 렌더링 및 클릭 트리거]
+    // ----------------------------------------------------
+    function renderTestGallery() {
+      const container = document.getElementById('sampleCardGrid');
+      container.innerHTML = SAMPLE_PRODUCTS.map((item, index) => `
+        <div class="sample-card" onclick="openSample(${index})">
+          <img src="${item.image}" alt="${item.title}" class="sample-card-img" loading="lazy">
+          <div class="sample-card-body">
+            <h3 class="sample-card-title">${item.title}</h3>
+            <div class="sample-card-price">${formatPrice(item.price, item.isFree)}</div>
+            <div class="sample-card-meta">
+              <span>📍 ${item.location.split(' ')[1] || item.location}</span>
+              <span>${item.timeAgo}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openSample(index) {
+      if (SAMPLE_PRODUCTS[index]) {
+        window.showDetailModal(SAMPLE_PRODUCTS[index]);
+      }
+    }
+
+    // 커스텀 데이터 주입 테스트 함수
+    function openCustomPrompt() {
+      const customTitle = prompt("테스트할 상품명을 입력하세요:", "갓 수확한 맛있는 찐감자 1박스");
+      if (!customTitle) return;
+
+      const customData = {
+        title: customTitle,
+        category: "기타 중고물품",
+        status: "selling",
+        statusText: "판매중",
+        price: 15000,
+        negotiable: true,
+        location: "역삼1동",
+        timeAgo: "방금 전",
+        image: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=1000&q=80",
+        description: "커스텀 주입 API(window.showDetailModal)로 전달된 상품 설명입니다.\n\n정상적으로 주입되어 모달이 표시됩니다!",
+        seller: {
+          nickname: "코딩하는감자",
+          avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+          region: "역삼1동 · 인증 99회",
+          temp: 45.2,
+          tempIcon: "🥔🔥"
+        },
+        stats: { views: 1, likes: 0, chats: 0 },
+        isLiked: false
+      };
+      window.showDetailModal(customData);
+    }
+
+    // 초기화 실행
+    document.addEventListener('DOMContentLoaded', () => {
+      renderTestGallery();
+    });
+  </script>
+</body>
+</html>

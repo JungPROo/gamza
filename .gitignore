@@ -1,0 +1,18 @@
+# 환경 설정 파일 (.env)
+.env
+.env.local
+.env.*.local
+
+# OS 임시 파일
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# 에디터 / IDE 설정
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# 로그 파일
+*.log
